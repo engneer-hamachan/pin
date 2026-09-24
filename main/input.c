@@ -3,7 +3,9 @@
 #include "keyboard.h"
 #include "widget.h"
 
-static int
+#include <stdio.h>
+
+int
 decode_key(int key) {
   switch (key) {
   case 'k':
@@ -23,7 +25,7 @@ decode_key(int key) {
   }
 }
 
-static bool
+bool
 move_cursor_by_key(Breadboard *board, int key) {
   switch (key) {
   case KEY_UP:
@@ -42,6 +44,36 @@ move_cursor_by_key(Breadboard *board, int key) {
     return false;
   }
 }
+
+// The browser build has no SD card, so it offers no save / load.
+#if !defined(PIN_BOARD_WASM)
+static void
+save_file(Breadboard *board) {
+  int slot_index = widget_run_menu("SAVE", SAVE_FILE_NAMES, SAVE_SLOT_COUNT, 0);
+
+  if (slot_index < 0)
+    return;
+
+  const char *result = save_board(board, slot_index) ? "saved" : "save failed";
+
+  snprintf(board->message, sizeof(board->message), "%s", result);
+}
+
+static void
+load_file(Breadboard *board) {
+  int slot_index = widget_run_menu("LOAD", SAVE_FILE_NAMES, SAVE_SLOT_COUNT, 0);
+
+  if (slot_index < 0)
+    return;
+
+  if (!widget_run_confirm("Load board?"))
+    return;
+
+  const char *result = load_board(board, slot_index) ? "loaded" : "load failed";
+
+  snprintf(board->message, sizeof(board->message), "%s", result);
+}
+#endif
 
 static void
 handle_edit_key(Breadboard *board, int key) {
@@ -74,6 +106,14 @@ handle_edit_key(Breadboard *board, int key) {
     if (widget_run_confirm("Clear board?"))
       remove_all_parts(board);
     break;
+#if !defined(PIN_BOARD_WASM)
+  case 's':
+    save_file(board);
+    break;
+  case 'o':
+    load_file(board);
+    break;
+#endif
   case '?':
     board->help_visible = true;
     break;

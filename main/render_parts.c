@@ -11,7 +11,7 @@
 #define TERMINAL_BAND_COLOR 0xB0B0B0
 #define BURNED_COLOR 0x282828
 #define UNLIT_LEVEL (LEVEL_MAXIMUM / 4)
-#define SOUND_COLOR 0xFFD020
+#define SOUND_COLOR 0xA04800
 #define MOTOR_BODY_COLOR 0xB0B0B0
 #define MOTOR_PHASE_RADIANS 0.39269908169872414
 #define CDS_BODY_COLOR 0xD08040
@@ -92,10 +92,17 @@ static void
 draw_buzzer(const Part *part, int frame_count, int center_x, int center_y) {
   canvas_fill_circle(center_x, center_y, 4, DARK_BODY_COLOR);
 
-  if (read_first_level(part) == 0)
+  int level = read_first_level(part);
+
+  if (level == 0)
     return;
 
-  canvas_circle(center_x, center_y, 6 + frame_count % 3, SOUND_COLOR);
+  canvas_circle(
+    center_x,
+    center_y,
+    6 + (frame_count % 3) * level / 2,
+    SOUND_COLOR
+  );
 }
 
 static void

@@ -56,7 +56,7 @@ sum_junction_currents(const Part *part) {
   return sum;
 }
 
-static void
+void
 format_part_reading(const Part *part, char *text, size_t text_size) {
   char first_reading[READING_PART_SIZE];
   char second_reading[READING_PART_SIZE];

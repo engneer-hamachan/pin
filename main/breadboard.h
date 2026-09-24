@@ -22,6 +22,9 @@
 #define WIRE_COLOR_COUNT 6
 #define MESSAGE_SIZE 32
 #define TEXT_SIZE 64
+#define SAVE_SLOT_COUNT 4
+#define SD_MOUNT_PATH "/sdcard"
+#define SAVE_DIRECTORY_PATH SD_MOUNT_PATH "/Pin_data"
 
 typedef enum {
   PART_KIND_WIRE,
@@ -97,6 +100,7 @@ int build_hole_index(int row, int column);
 int read_hole_row(int hole_index);
 int read_hole_column(int hole_index);
 bool hole_exists(int row, int column);
+bool is_rail_hole(int hole_index);
 int compute_row_y(int row);
 int compute_column_x(int column);
 int compute_hole_x(int hole_index);
@@ -150,7 +154,10 @@ void configure_part_elements(Breadboard *board, Part *part);
 
 void step_simulation(Breadboard *board);
 bool is_animation_running(const Breadboard *board);
+int compute_motor_phase_step(const Part *part);
 
+int count_placement_entries(void);
+const PlacementEntry *find_placement_entry(int entry_index);
 void start_placement(Breadboard *board);
 void cancel_placement(Breadboard *board);
 void handle_placement_key(Breadboard *board, int key);
@@ -159,11 +166,25 @@ bool is_placement_allowed(Breadboard *board);
 void
 format_placement_title(const Breadboard *board, char *text, size_t text_size);
 
+int decode_key(int key);
+bool move_cursor_by_key(Breadboard *board, int key);
 void handle_key(Breadboard *board, int key);
 
+bool mount_sd(void);
+void unmount_sd(void);
+
+extern const char *const SAVE_FILE_NAMES[SAVE_SLOT_COUNT];
+
+bool save_board(const Breadboard *board, int slot_index);
+bool load_board(Breadboard *board, int slot_index);
+
+void format_part_reading(const Part *part, char *text, size_t text_size);
 void format_header_title(Breadboard *board, char *text, size_t text_size);
 void format_header_right(Breadboard *board, char *text, size_t text_size);
 
+void draw_board(void);
+void draw_placement_preview(Breadboard *board);
+void draw_cursor(const Breadboard *board);
 void draw_screen(Breadboard *board);
 uint32_t blend_color(uint32_t dark_color, uint32_t bright_color, int level);
 void draw_parts(const Breadboard *board);

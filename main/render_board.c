@@ -14,7 +14,11 @@
 #define CURSOR_COLOR 0x00C0FF
 #define PLACEMENT_ALLOWED_COLOR 0x20C020
 #define PLACEMENT_BLOCKED_COLOR 0xFF0000
+#if defined(PIN_BOARD_WASM)
 #define HELP_LINE_COUNT 8
+#else
+#define HELP_LINE_COUNT 9
+#endif
 #define HELP_LINE_HEIGHT 12
 
 static const char *const HELP_LINES[HELP_LINE_COUNT] = {
@@ -24,6 +28,9 @@ static const char *const HELP_LINES[HELP_LINE_COUNT] = {
   "+ -  change value / knob",
   "x / BS  remove part",
   "c  clear board",
+#if !defined(PIN_BOARD_WASM)
+  "s / o  save / load",
+#endif
   "q  quit",
   "any key  close help",
 };
@@ -43,7 +50,7 @@ draw_holes(void) {
   }
 }
 
-static void
+void
 draw_board(void) {
   int top_y = compute_row_y(0) - 3 - 1;
   int bottom_y = compute_row_y(BOARD_ROW_COUNT - 1) + 3 + 2;
@@ -69,7 +76,7 @@ draw_hole_marker(int hole_index, uint32_t color) {
   );
 }
 
-static void
+void
 draw_placement_preview(Breadboard *board) {
   int hole_indices[PART_TERMINAL_CAPACITY];
   int hole_count = compute_placement_hole_indices(board, hole_indices);
@@ -92,6 +99,11 @@ draw_placement_preview(Breadboard *board) {
 
   for (int i = 0; i < hole_count; i++)
     draw_hole_marker(hole_indices[i], color);
+}
+
+void
+draw_cursor(const Breadboard *board) {
+  draw_hole_marker(find_cursor_hole_index(board), CURSOR_COLOR);
 }
 
 static void
@@ -126,7 +138,7 @@ draw_screen(Breadboard *board) {
   if (board->placing_entry)
     draw_placement_preview(board);
 
-  draw_hole_marker(find_cursor_hole_index(board), CURSOR_COLOR);
+  draw_cursor(board);
 
   format_header_title(board, title, sizeof title);
   format_header_right(board, right_text, sizeof right_text);

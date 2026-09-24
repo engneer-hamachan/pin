@@ -1,5 +1,6 @@
 #include "breadboard.h"
 #include "canvas.h"
+#include "game.h"
 #include "keyboard.h"
 
 #include "esp_ota_ops.h"
@@ -76,6 +77,23 @@ app_main(void) {
   canvas_begin();
   keyboard_begin();
   init_breadboard();
-  run_breadboard();
+
+  for (;;) {
+    TitleChoice choice = run_title_screen();
+
+    if (choice == TITLE_CHOICE_GAME) {
+      run_game(&board);
+      continue;
+    }
+
+    if (choice == TITLE_CHOICE_SIMULATOR) {
+      board.quit = false;
+      run_breadboard();
+      continue;
+    }
+
+    break;
+  }
+
   restart_into_factory_app();
 }

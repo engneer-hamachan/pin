@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#define WIDGET_HEADER_HEIGHT 17
+#define WIDGET_HEADER_HEIGHT 13
 #define WIDGET_ROW_HEIGHT 16
 
 void widget_draw_header(const char *title, const char *right_text);

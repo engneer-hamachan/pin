@@ -28,9 +28,16 @@ hole_exists(int row, int column) {
          column < BOARD_COLUMN_COUNT;
 }
 
+bool
+is_rail_hole(int hole_index) {
+  int row = read_hole_row(hole_index);
+
+  return row < RAIL_ROW_COUNT || row >= BOTTOM_RAIL_FIRST_ROW;
+}
+
 int
 compute_row_y(int row) {
-  int y = 21 + row * 7;
+  int y = 23 + row * 7;
 
   if (row >= RAIL_ROW_COUNT)
     y += 4;

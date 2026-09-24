@@ -16,15 +16,25 @@ idf_component_register(
     placement.c
     input.c
     info.c
+    storage.c
     render_board.c
     render_parts.c
     render_modules.c
+    ../game/title.c
+    ../game/game.c
+    ../game/rules.c
+    ../game/hiscore.c
   INCLUDE_DIRS
     "."
+    "../game"
   PRIV_REQUIRES
     app_update
     esp_driver_gpio
+    esp_driver_sdspi
+    esp_driver_spi
     esp_partition
+    fatfs
+    sdmmc
 )
 
 target_compile_definitions(${COMPONENT_LIB} PRIVATE PIN_BOARD_${PIN_BOARD})

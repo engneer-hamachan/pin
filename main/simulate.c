@@ -11,6 +11,7 @@
 #define LED_FULL_BRIGHTNESS_CURRENT 0.02
 #define LED_VISIBLE_CURRENT 0.0005
 #define BUZZER_SOUND_CURRENT 0.005
+#define BUZZER_FULL_VOLUME_CURRENT 0.025
 #define CAPACITOR_FULL_VOLTAGE 5.0
 #define MOTOR_PHASE_STEP_PER_AMPERE 20.0
 #define MOTOR_PHASE_STEP_MAXIMUM (MOTOR_PHASE_COUNT / 4)
@@ -103,6 +104,16 @@ compute_brightness_level(double current) {
 }
 
 static int
+compute_volume_level(double current) {
+  if (current <= BUZZER_SOUND_CURRENT)
+    return 0;
+
+  int level = (int)(current / BUZZER_FULL_VOLUME_CURRENT * LEVEL_MAXIMUM);
+
+  return clamp_integer(level, 1, LEVEL_MAXIMUM);
+}
+
+static int
 compute_part_levels(const Part *part, int *levels) {
   switch (part->kind) {
   case PART_KIND_LED:
@@ -112,7 +123,7 @@ compute_part_levels(const Part *part, int *levels) {
       levels[i] = compute_brightness_level(part->junction_currents[i]);
     return part->junction_current_count;
   case PART_KIND_BUZZER:
-    levels[0] = part->junction_currents[0] > BUZZER_SOUND_CURRENT ? 1 : 0;
+    levels[0] = compute_volume_level(part->junction_currents[0]);
     return 1;
   case PART_KIND_CAPACITOR:
     levels[0] = clamp_integer(
@@ -234,7 +245,7 @@ solve_circuit(Breadboard *board) {
     update_part_from_solution(board, &board->parts[i]);
 }
 
-static int
+int
 compute_motor_phase_step(const Part *part) {
   return clamp_integer(
     (int)(part->current * MOTOR_PHASE_STEP_PER_AMPERE),
@@ -276,7 +287,7 @@ is_animation_running(const Breadboard *board) {
       return true;
 
     if (part->kind == PART_KIND_BUZZER && part->level_count > 0 &&
-        part->levels[0] == 1)
+        part->levels[0] > 0)
       return true;
   }
 

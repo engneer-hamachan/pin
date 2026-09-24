@@ -65,8 +65,6 @@ widget_draw_header(const char *title, const char *right_text) {
   int text_y = compute_centered_text_y(0, WIDGET_HEADER_HEIGHT);
   char clipped[CLIPPED_TEXT_SIZE];
 
-  canvas_rect(0, 0, CANVAS_WIDTH - 1, WIDGET_HEADER_HEIGHT, THEME_BORDER_COLOR);
-
   clip_text(title, CANVAS_WIDTH - 10, clipped, sizeof clipped);
   canvas_text(5, text_y, clipped, THEME_EMPHASIS_COLOR);
 

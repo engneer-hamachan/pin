@@ -5,10 +5,10 @@
 #include <M5Unified.hpp>
 #include <stdlib.h>
 
-#if defined(PIN_BOARD_CAPTFT_ST7789) || defined(PIN_BOARD_CAPTFT_ILI9341)
+#if defined(PIN_BOARD_TFT_ST7789) || defined(PIN_BOARD_TFT_ILI9341)
 #include "driver/gpio.h"
 #include <lgfx/v1/platforms/esp32/Bus_SPI.hpp>
-#if defined(PIN_BOARD_CAPTFT_ILI9341)
+#if defined(PIN_BOARD_TFT_ILI9341)
 #include "Panel_ILI9341.hpp"
 #else
 #include <lgfx/v1/panel/Panel_ST7789.hpp>
@@ -18,7 +18,7 @@
 static lgfx::LGFX_Device *display = nullptr;
 static lgfx::LGFX_Sprite *sprite = nullptr;
 
-#if defined(PIN_BOARD_CAPTFT_ST7789) || defined(PIN_BOARD_CAPTFT_ILI9341)
+#if defined(PIN_BOARD_TFT_ST7789) || defined(PIN_BOARD_TFT_ILI9341)
 
 static constexpr int PANEL_WIDTH = 240;
 static constexpr int PANEL_HEIGHT = 320;
@@ -26,7 +26,7 @@ static constexpr int PANEL_ROTATION = 1;
 static constexpr gpio_num_t SD_CARD_CHIP_SELECT_PIN = GPIO_NUM_12;
 
 static lgfx::Bus_SPI panel_bus;
-#if defined(PIN_BOARD_CAPTFT_ILI9341)
+#if defined(PIN_BOARD_TFT_ILI9341)
 static lgfx::Panel_ILI9341 panel;
 #else
 static lgfx::Panel_ST7789 panel;
@@ -59,7 +59,7 @@ configure_external_display(void) {
   panel_config.panel_height = PANEL_HEIGHT;
   panel_config.offset_x = 0;
   panel_config.offset_y = 0;
-#if defined(PIN_BOARD_CAPTFT_ILI9341)
+#if defined(PIN_BOARD_TFT_ILI9341)
   panel_config.offset_rotation = 2;
 #endif
   panel_config.invert = false;

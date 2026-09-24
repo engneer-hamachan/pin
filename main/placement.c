@@ -67,6 +67,28 @@ static const PlacementCategory CATEGORIES[CATEGORY_COUNT] = {
   },
 };
 
+int
+count_placement_entries(void) {
+  int entry_count = 0;
+
+  for (int i = 0; i < CATEGORY_COUNT; i++)
+    entry_count += CATEGORIES[i].entry_count;
+
+  return entry_count;
+}
+
+const PlacementEntry *
+find_placement_entry(int entry_index) {
+  for (int i = 0; i < CATEGORY_COUNT; i++) {
+    if (entry_index < CATEGORIES[i].entry_count)
+      return &CATEGORIES[i].entries[entry_index];
+
+    entry_index -= CATEGORIES[i].entry_count;
+  }
+
+  return NULL;
+}
+
 void
 start_placement(Breadboard *board) {
   const char *category_labels[CATEGORY_COUNT];
@@ -168,7 +190,7 @@ confirm_placement(Breadboard *board) {
 
   compute_placement_hole_indices(board, hole_indices);
   add_part(board, kind, hole_indices, board->placing_entry->color_index);
-  cancel_placement(board);
+  board->placing_first_hole_index = NO_HOLE_INDEX;
 }
 
 void
