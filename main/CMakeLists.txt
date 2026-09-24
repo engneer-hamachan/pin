@@ -1,0 +1,30 @@
+idf_component_register(
+  SRCS
+    main.c
+    canvas.cpp
+    keyboard.cpp
+    widget.c
+    matrix.c
+    circuit.c
+    board.c
+    catalog.c
+    footprint.c
+    values.c
+    parts.c
+    elements.c
+    simulate.c
+    placement.c
+    input.c
+    info.c
+    render_board.c
+    render_parts.c
+    render_modules.c
+  INCLUDE_DIRS
+    "."
+  PRIV_REQUIRES
+    app_update
+    esp_driver_gpio
+    esp_partition
+)
+
+target_compile_definitions(${COMPONENT_LIB} PRIVATE PIN_BOARD_${PIN_BOARD})
