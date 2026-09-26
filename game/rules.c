@@ -242,14 +242,11 @@ remove_marked_parts(Breadboard *board) {
 }
 
 static bool
-has_two_free_holes(Breadboard *board, bool rails_allowed) {
+has_two_free_holes(Breadboard *board) {
   int free_count = 0;
 
   for (int i = 0; i < HOLE_COUNT; i++) {
     if (find_part_at(board, i))
-      continue;
-
-    if (!rails_allowed && is_rail_hole(i))
       continue;
 
     free_count++;
@@ -262,28 +259,15 @@ has_two_free_holes(Breadboard *board, bool rails_allowed) {
 }
 
 bool
-touches_rail(const int *hole_indices, int hole_count) {
-  for (int i = 0; i < hole_count; i++) {
-    if (is_rail_hole(hole_indices[i]))
-      return true;
-  }
-
-  return false;
-}
-
-bool
 can_place_anywhere(Breadboard *board, PartKind kind) {
   if (!has_footprint(kind))
-    return has_two_free_holes(board, kind == PART_KIND_WIRE);
+    return has_two_free_holes(board);
 
   int hole_indices[PART_TERMINAL_CAPACITY];
 
   for (int row = 0; row < BOARD_ROW_COUNT; row++) {
     for (int column = 0; column < BOARD_COLUMN_COUNT; column++) {
       if (!compute_footprint_hole_indices(kind, row, column, hole_indices))
-        continue;
-
-      if (touches_rail(hole_indices, count_terminals(kind)))
         continue;
 
       if (are_holes_free(board, hole_indices, count_terminals(kind)))
