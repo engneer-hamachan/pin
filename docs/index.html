@@ -23,23 +23,32 @@
     opacity: 0;
     font-size: 16px;
   }
-  #pad { display: none; }
-  #pad button {
+  #pad, #symbols { display: none; }
+  #pad button, #symbols button {
     min-width: 44px;
     height: 44px;
-    border: 1px solid #f5972d;
+    border: 1px solid #f0501a;
     border-radius: 6px;
     background: #241604;
-    color: #cfa45f;
+    color: #f4e8d0;
     font: 16px monospace;
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
   }
-  #pad button.pressed { background: #f5972d; color: #000; }
+  #pad button.pressed, #symbols button.pressed { background: #f0501a; color: #000; }
   @media (pointer: coarse) {
     body { flex-direction: column; justify-content: center; }
-    body.text-input { justify-content: flex-start; }
+    body.text-input {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--viewport-top, 0px);
+      height: var(--viewport-height, 100vh);
+      box-sizing: border-box;
+      padding: 16px 0;
+      gap: 12px;
+    }
     canvas { width: 100vw; }
     #pad {
       display: flex;
@@ -67,9 +76,18 @@
       gap: 4px;
     }
     body.text-input canvas {
-      width: min(100vw, calc(var(--viewport-height, 100vh) * 240 / 135));
+      width: min(100vw, calc((var(--viewport-height, 100vh) - 120px) * 240 / 135));
     }
     body.text-input #pad { display: none; }
+    body.text-input #symbols {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0 8px;
+    }
+    #symbols button { min-width: 0; height: 36px; padding: 0; }
   }
 </style>
 </head>
@@ -94,12 +112,31 @@
     <button data-key="c">c</button>
     <button data-key="e">e</button>
     <button data-key="v">v</button>
-    <button data-key="p">p</button>
     <button data-key="?">?</button>
     <button data-key="q">q</button>
     <button data-key="y">y</button>
     <button data-key="n">n</button>
   </div>
+</div>
+<div id="symbols">
+  <button data-key="Escape">Esc</button>
+  <button data-key="Tab">Tab</button>
+  <button data-key="ArrowLeft">◀</button>
+  <button data-key="ArrowDown">▼</button>
+  <button data-key="ArrowUp">▲</button>
+  <button data-key="ArrowRight">▶</button>
+  <button data-key="#">#</button>
+  <button data-key="_">_</button>
+  <button data-key="=">=</button>
+  <button data-key="(">(</button>
+  <button data-key=")">)</button>
+  <button data-key="[">[</button>
+  <button data-key="]">]</button>
+  <button data-key="{">{</button>
+  <button data-key="}">}</button>
+  <button data-key="|">|</button>
+  <button data-key="&quot;">"</button>
+  <button data-key="'">'</button>
 </div>
 <script>
   const textInput = document.getElementById("text-input");
@@ -110,7 +147,7 @@
     );
   }
 
-  for (const button of document.querySelectorAll("#pad [data-key]")) {
+  for (const button of document.querySelectorAll("#pad [data-key], #symbols [data-key]")) {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       button.classList.add("pressed");
@@ -126,12 +163,17 @@
 
   function updateViewportHeight() {
     const height = viewport ? viewport.height : window.innerHeight;
+    const top = viewport ? viewport.offsetTop : 0;
 
     document.documentElement.style.setProperty("--viewport-height", `${height}px`);
+    document.documentElement.style.setProperty("--viewport-top", `${top}px`);
   }
 
   updateViewportHeight();
   (viewport || window).addEventListener("resize", updateViewportHeight);
+
+  if (viewport)
+    viewport.addEventListener("scroll", updateViewportHeight);
 
   document.getElementById("canvas").addEventListener("click", () => {
     if (coarsePointer.matches && document.body.classList.contains("text-input"))

@@ -88,9 +88,9 @@
 #define HISCORE_Y 120
 
 typedef enum {
-  TITLE_ITEM_START,
-  TITLE_ITEM_HOW_TO_PLAY,
   TITLE_ITEM_SIMULATOR,
+  TITLE_ITEM_GAME,
+  TITLE_ITEM_HOW_TO_PLAY,
   TITLE_ITEM_COUNT
 } TitleItem;
 
@@ -107,9 +107,9 @@ static const LogoGlyph LOGO_GLYPHS[LOGO_GLYPH_COUNT] = {
 };
 
 static const char *const TITLE_ITEM_LABELS[TITLE_ITEM_COUNT] = {
-  "START",
-  "HOW TO PLAY",
   "SIMULATOR",
+  "GAME",
+  "HOW TO PLAY",
 };
 
 static const PageLine HOW_TO_PLAY_LINES[] = {
@@ -159,10 +159,11 @@ static const PageLine HOW_TO_PLAY_LINES[] = {
   {PAGE_LINE_TEXT, NULL, "on a slide switch flips it."},
   {PAGE_LINE_TEXT, NULL, "+ / - on a resistor, volume or CdS"},
   {PAGE_LINE_TEXT, NULL, "changes its value."},
-  {PAGE_LINE_TEXT, NULL, "Pause to read the part under the"},
-  {PAGE_LINE_TEXT, NULL, "cursor in the header."},
-  {PAGE_LINE_TEXT, NULL, "While paused, press i on a part to"},
-  {PAGE_LINE_TEXT, NULL, "see what it is and how to use it."},
+  {PAGE_LINE_TEXT, NULL, "` (ESC) puts the part down. Then"},
+  {PAGE_LINE_TEXT, NULL, "the header shows the part under"},
+  {PAGE_LINE_TEXT, NULL, "the cursor, i shows what it is and"},
+  {PAGE_LINE_TEXT, NULL, "? shows the keys. Enter picks the"},
+  {PAGE_LINE_TEXT, NULL, "part up again."},
   {PAGE_LINE_BLANK, NULL, NULL},
   {PAGE_LINE_HEADING, NULL, "GAME OVER"},
   {PAGE_LINE_TEXT, NULL, "- an LED or 7-seg burns out"},
@@ -180,9 +181,10 @@ static const PageLine HOW_TO_PLAY_LINES[] = {
   {PAGE_LINE_KEY, "Enter", "set the next pin"},
   {PAGE_LINE_KEY, "space", "press / flip a switch"},
   {PAGE_LINE_KEY, "+ -", "change a value"},
-  {PAGE_LINE_KEY, "` (ESC)", "redo the first pin"},
-  {PAGE_LINE_KEY, "p", "pause / resume"},
-  {PAGE_LINE_KEY, "i", "part info (while paused)"},
+  {PAGE_LINE_KEY, "` (ESC)", "redo the first pin / put down"},
+  {PAGE_LINE_KEY, "Enter", "pick up (part put down)"},
+  {PAGE_LINE_KEY, "i", "part info (part put down)"},
+  {PAGE_LINE_KEY, "?", "help (part put down)"},
   {PAGE_LINE_KEY, "q", "quit to the title"},
 };
 
@@ -658,7 +660,7 @@ draw_title_screen(int selected_index, int hiscore) {
 
 TitleChoice
 run_title_screen(void) {
-  int selected_index = TITLE_ITEM_START;
+  int selected_index = TITLE_ITEM_SIMULATOR;
   int hiscore = load_hiscore();
 
   for (;;) {
@@ -679,13 +681,13 @@ run_title_screen(void) {
       continue;
 
     switch (selected_index) {
-    case TITLE_ITEM_START:
+    case TITLE_ITEM_SIMULATOR:
+      return TITLE_CHOICE_SIMULATOR;
+    case TITLE_ITEM_GAME:
       return TITLE_CHOICE_GAME;
-    case TITLE_ITEM_HOW_TO_PLAY:
+    default:
       show_page("HOW TO PLAY", HOW_TO_PLAY_LINES, HOW_TO_PLAY_LINE_COUNT);
       break;
-    default:
-      return TITLE_CHOICE_SIMULATOR;
     }
   }
 }

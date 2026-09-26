@@ -144,6 +144,11 @@ cancel_placement(Breadboard *board) {
   board->placing_first_hole_index = NO_HOLE_INDEX;
 }
 
+bool
+has_placing_first_hole(const Breadboard *board) {
+  return board->placing_first_hole_index != NO_HOLE_INDEX;
+}
+
 int
 compute_placement_hole_indices(const Breadboard *board, int *hole_indices) {
   PartKind kind = board->placing_entry->kind;

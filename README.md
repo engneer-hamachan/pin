@@ -33,9 +33,9 @@ Copy the `pin.bin` for your board to the SD card and open it in the Filer to ins
 
 At start Pin shows a title screen. `j` / `k` or arrows choose, Enter / space selects:
 
-- START: play the game
-- HOW TO PLAY: show the game rules. `j` / `k` scroll a line, `h` / `l` a page, any other key goes back
 - SIMULATOR: open the breadboard simulator
+- GAME: play the game
+- HOW TO PLAY: show the game rules. `j` / `k` scroll a line, `h` / `l` a page, any other key goes back
 
 `q` then `y` on the title quits and restarts into Area512.
 
@@ -51,9 +51,10 @@ The game is over when a part burns out, the battery is shorted, the dealt part f
 - Enter: set the next pin
 - space: press a tact switch / flip a slide switch
 - `+` / `=` / `-`: change resistor value, volume knob or CdS light
-- `` ` `` (ESC): redo the first pin
-- `p`: pause; while paused the header shows the part under the cursor and no part can be placed
-- `i` while paused: show what the part under the cursor is, its pins and keys. `j` / `k` scroll a line, `h` / `l` a page, any other key goes back
+- `` ` `` (ESC): redo the first pin; before the first pin is set, put the part down. While it is down the header shows the part under the cursor, as in the simulator
+- Enter while the part is down: pick it up again
+- `i` while the part is down: show what the part under the cursor is, its pins and keys. `j` / `k` scroll a line, `h` / `l` a page, any other key goes back
+- `?` while the part is down: help
 - `q`: quit to the title
 
 ## Controls
