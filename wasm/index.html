@@ -81,13 +81,13 @@
     body.text-input #pad { display: none; }
     body.text-input #symbols {
       display: grid;
-      grid-template-columns: repeat(10, 1fr);
+      grid-template-columns: repeat(11, 1fr);
       gap: 4px;
       box-sizing: border-box;
       width: 100%;
       padding: 0 8px;
     }
-    #symbols button { min-width: 0; height: 36px; padding: 0; }
+    #symbols button { min-width: 0; height: 36px; padding: 0; font-size: 14px; }
   }
 </style>
 </head>
@@ -123,6 +123,8 @@
   <button data-key=":">:</button>
   <button data-key="!">!</button>
   <button data-key="Tab">Tab</button>
+  <button data-key="ArrowUp">▲</button>
+  <button data-key="ArrowDown">▼</button>
   <button data-key="#">#</button>
   <button data-key="_">_</button>
   <button data-key="=">=</button>
