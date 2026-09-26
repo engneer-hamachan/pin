@@ -12,6 +12,7 @@ static constexpr int PIXEL_COUNT = CANVAS_WIDTH * CANVAS_HEIGHT;
 static lgfx::LGFX_Sprite *sprite = nullptr;
 static lgfx::LGFX_Sprite *row_sprite = nullptr;
 static uint8_t rgba_pixels[PIXEL_COUNT * RGBA_BYTE_COUNT];
+static bool band_drawn = false;
 
 EM_JS(void, put_canvas_pixels, (const uint8_t *pixels, int width, int height), {
   const canvas = document.getElementById("canvas");
@@ -93,8 +94,8 @@ canvas_text_width(const char *text) {
 }
 
 // The 16-bit sprite stores each pixel as RRRRRGGG GGGBBBBB.
-void
-canvas_push(void) {
+static void
+push_sprite(void) {
   const uint8_t *source = (const uint8_t *)sprite->getBuffer();
 
   for (int i = 0; i < PIXEL_COUNT; i++) {
@@ -112,6 +113,32 @@ canvas_push(void) {
   }
 
   put_canvas_pixels(rgba_pixels, CANVAS_WIDTH, CANVAS_HEIGHT);
+}
+
+bool
+canvas_begin_band(void) {
+  band_drawn = !band_drawn;
+  return band_drawn;
+}
+
+void
+canvas_push_band(void) {
+  push_sprite();
+}
+
+void
+canvas_screen_fill(uint32_t color) {
+  sprite->fillScreen(color);
+}
+
+void
+canvas_screen_fill_rect(int x, int y, int width, int height, uint32_t color) {
+  sprite->fillRect(x, y, width, height, color);
+}
+
+void
+canvas_screen_push(void) {
+  push_sprite();
 }
 
 void

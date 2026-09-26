@@ -12,7 +12,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(PIN_BOARD_WASM)
 #define RUBY_HEAP_SIZE (128 * 1024)
+#else
+#define RUBY_HEAP_SIZE (80 * 1024)
+#endif
 #define RUBY_HEAP_ALIGNMENT 8
 #define STEP_BUDGET_US 20000
 #define PROGRAM_TASK_NAME "pino"
@@ -27,7 +31,7 @@ typedef struct {
   mrb_value task;
 } ProgramStart;
 
-static uint8_t *heap_memory = NULL;
+_Alignas(RUBY_HEAP_ALIGNMENT) static uint8_t heap_memory[RUBY_HEAP_SIZE];
 static mrb_state *ruby_state = NULL;
 static char *program_source = NULL;
 static mrb_value program_task;
@@ -103,25 +107,13 @@ open_ruby_state(void) {
   if (ruby_state != NULL)
     return true;
 
-  heap_memory = malloc(RUBY_HEAP_SIZE + RUBY_HEAP_ALIGNMENT);
-
-  if (heap_memory == NULL)
-    return false;
-
-  uintptr_t address = (uintptr_t)heap_memory;
-  uintptr_t aligned_address = (address + RUBY_HEAP_ALIGNMENT - 1) &
-                              ~(uintptr_t)(RUBY_HEAP_ALIGNMENT - 1);
-
-  ruby_state =
-    mrb_open_with_custom_alloc((void *)aligned_address, RUBY_HEAP_SIZE);
+  ruby_state = mrb_open_with_custom_alloc(heap_memory, RUBY_HEAP_SIZE);
 
   if (MRB_OPEN_FAILURE(ruby_state)) {
     if (ruby_state != NULL)
       mrb_close(ruby_state);
 
     ruby_state = NULL;
-    free(heap_memory);
-    heap_memory = NULL;
     return false;
   }
 
@@ -138,8 +130,6 @@ close_ruby_state(void) {
   mrb_close(ruby_state);
   ruby_state = NULL;
   global_mrb = NULL;
-  free(heap_memory);
-  heap_memory = NULL;
   free(program_source);
   program_source = NULL;
 }

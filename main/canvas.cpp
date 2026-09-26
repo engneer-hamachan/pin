@@ -3,7 +3,6 @@
 #include "theme.h"
 
 #include <M5Unified.hpp>
-#include <stdlib.h>
 
 #if defined(PIN_BOARD_TFT_ST7789) || defined(PIN_BOARD_TFT_ILI9341)
 #include "driver/gpio.h"
@@ -15,9 +14,17 @@
 #endif
 #endif
 
+static constexpr int BAND_ROW_COUNT = 32;
+
+alignas(4) static uint16_t band_buffer[CANVAS_WIDTH * BAND_ROW_COUNT];
+
 static lgfx::LGFX_Device *display = nullptr;
 static lgfx::LGFX_Sprite *sprite = nullptr;
 static lgfx::LGFX_Sprite *row_sprite = nullptr;
+static int screen_x = 0;
+static int screen_y = 0;
+static int band_top = 0;
+static int next_band_top = 0;
 
 #if defined(PIN_BOARD_TFT_ST7789) || defined(PIN_BOARD_TFT_ILI9341)
 
@@ -109,27 +116,19 @@ canvas_begin(void) {
 
   display = begin_display();
   display->fillScreen((uint32_t)THEME_BACKGROUND_COLOR);
+  screen_x = (display->width() - CANVAS_WIDTH) / 2;
+  screen_y = (display->height() - CANVAS_HEIGHT) / 2;
 
   sprite = new lgfx::LGFX_Sprite(display);
-  sprite->setPsram(false);
   sprite->setColorDepth(16);
-
-  if (sprite->createSprite(CANVAS_WIDTH, CANVAS_HEIGHT) == nullptr) {
-    abort();
-  }
-
+  sprite->setBuffer(band_buffer, CANVAS_WIDTH, BAND_ROW_COUNT, 16);
   sprite->setFont(&lgfx::v1::fonts::efontJA_12);
   sprite->setTextSize(1);
   sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
 
-  row_sprite = new lgfx::LGFX_Sprite(sprite);
-  row_sprite->setPsram(false);
+  row_sprite = new lgfx::LGFX_Sprite(display);
   row_sprite->setColorDepth(16);
-
-  if (row_sprite->createSprite(CANVAS_WIDTH, CANVAS_ROW_HEIGHT) == nullptr) {
-    abort();
-  }
-
+  row_sprite->setBuffer(band_buffer, CANVAS_WIDTH, CANVAS_ROW_HEIGHT, 16);
   row_sprite->setFont(&lgfx::v1::fonts::efontJA_12);
   row_sprite->setTextSize(1);
   row_sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
@@ -142,38 +141,38 @@ canvas_fill(uint32_t color) {
 
 void
 canvas_pixel(int x, int y, uint32_t color) {
-  sprite->drawPixel(x, y, color);
+  sprite->drawPixel(x, y - band_top, color);
 }
 
 void
 canvas_line(int x0, int y0, int x1, int y1, uint32_t color) {
-  sprite->drawLine(x0, y0, x1, y1, color);
+  sprite->drawLine(x0, y0 - band_top, x1, y1 - band_top, color);
 }
 
 void
 canvas_rect(int x, int y, int width, int height, uint32_t color) {
-  sprite->drawRect(x, y, width, height, color);
+  sprite->drawRect(x, y - band_top, width, height, color);
 }
 
 void
 canvas_fill_rect(int x, int y, int width, int height, uint32_t color) {
-  sprite->fillRect(x, y, width, height, color);
+  sprite->fillRect(x, y - band_top, width, height, color);
 }
 
 void
 canvas_circle(int x, int y, int radius, uint32_t color) {
-  sprite->drawCircle(x, y, radius, color);
+  sprite->drawCircle(x, y - band_top, radius, color);
 }
 
 void
 canvas_fill_circle(int x, int y, int radius, uint32_t color) {
-  sprite->fillCircle(x, y, radius, color);
+  sprite->fillCircle(x, y - band_top, radius, color);
 }
 
 void
 canvas_text(int x, int y, const char *text, uint32_t color) {
   sprite->setTextColor(color);
-  sprite->drawString(text, x, y);
+  sprite->drawString(text, x, y - band_top);
 }
 
 int
@@ -181,14 +180,41 @@ canvas_text_width(const char *text) {
   return (int)sprite->textWidth(text);
 }
 
-void
-canvas_push(void) {
-  sprite->pushSprite(
-    display,
-    (display->width() - CANVAS_WIDTH) / 2,
-    (display->height() - CANVAS_HEIGHT) / 2
-  );
+bool
+canvas_begin_band(void) {
+  if (next_band_top >= CANVAS_HEIGHT) {
+    next_band_top = 0;
+    return false;
+  }
+
+  int row_count = CANVAS_HEIGHT - next_band_top;
+
+  if (row_count > BAND_ROW_COUNT)
+    row_count = BAND_ROW_COUNT;
+
+  band_top = next_band_top;
+  next_band_top += row_count;
+  sprite->setBuffer(band_buffer, CANVAS_WIDTH, row_count, 16);
+  return true;
 }
+
+void
+canvas_push_band(void) {
+  sprite->pushSprite(display, screen_x, screen_y + band_top);
+}
+
+void
+canvas_screen_fill(uint32_t color) {
+  display->fillRect(screen_x, screen_y, CANVAS_WIDTH, CANVAS_HEIGHT, color);
+}
+
+void
+canvas_screen_fill_rect(int x, int y, int width, int height, uint32_t color) {
+  display->fillRect(screen_x + x, screen_y + y, width, height, color);
+}
+
+void
+canvas_screen_push(void) {}
 
 void
 canvas_row_fill(uint32_t color) {
@@ -213,5 +239,5 @@ canvas_row_text(int x, int y, const char *text, uint32_t color) {
 
 void
 canvas_row_commit(int y) {
-  row_sprite->pushSprite(sprite, 0, y);
+  row_sprite->pushSprite(display, screen_x, screen_y + y);
 }

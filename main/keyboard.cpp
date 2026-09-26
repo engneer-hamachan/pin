@@ -675,3 +675,8 @@ keyboard_wait_key(void) {
     vTaskDelay(pdMS_TO_TICKS(WAIT_POLL_INTERVAL_MS));
   }
 }
+
+void
+keyboard_set_text_input(bool enabled) {
+  (void)enabled;
+}

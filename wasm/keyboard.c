@@ -88,6 +88,18 @@ handle_key_down(
   return true;
 }
 
+EM_JS(void, set_text_input_class, (int enabled), {
+  document.body.classList.toggle("text-input", enabled !== 0);
+
+  if (!enabled)
+    document.getElementById("text-input").blur();
+});
+
+void
+keyboard_set_text_input(bool enabled) {
+  set_text_input_class(enabled);
+}
+
 void
 keyboard_begin(void) {
   emscripten_set_keydown_callback(

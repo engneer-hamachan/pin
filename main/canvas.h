@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -21,7 +22,12 @@ void canvas_circle(int x, int y, int radius, uint32_t color);
 void canvas_fill_circle(int x, int y, int radius, uint32_t color);
 void canvas_text(int x, int y, const char *text, uint32_t color);
 int canvas_text_width(const char *text);
-void canvas_push(void);
+bool canvas_begin_band(void);
+void canvas_push_band(void);
+
+void canvas_screen_fill(uint32_t color);
+void canvas_screen_fill_rect(int x, int y, int width, int height, uint32_t color);
+void canvas_screen_push(void);
 
 void canvas_row_fill(uint32_t color);
 void canvas_row_fill_rect(int x, int y, int width, int height, uint32_t color);

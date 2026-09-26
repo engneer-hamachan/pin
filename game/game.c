@@ -428,23 +428,26 @@ show_game_over(Game *game) {
     "any key  title",
   };
 
-  draw_game(game);
-  widget_draw_panel(
-    GAME_OVER_PANEL_X,
-    GAME_OVER_PANEL_Y,
-    GAME_OVER_PANEL_WIDTH,
-    GAME_OVER_LINE_COUNT * GAME_OVER_LINE_HEIGHT + 8
-  );
-
-  for (int i = 0; i < GAME_OVER_LINE_COUNT; i++)
-    canvas_text(
-      GAME_OVER_PANEL_X + 8,
-      GAME_OVER_PANEL_Y + 4 + i * GAME_OVER_LINE_HEIGHT,
-      lines[i],
-      i == 0 ? THEME_EMPHASIS_COLOR : THEME_TEXT_COLOR
+  while (canvas_begin_band()) {
+    draw_game(game);
+    widget_draw_panel(
+      GAME_OVER_PANEL_X,
+      GAME_OVER_PANEL_Y,
+      GAME_OVER_PANEL_WIDTH,
+      GAME_OVER_LINE_COUNT * GAME_OVER_LINE_HEIGHT + 8
     );
 
-  canvas_push();
+    for (int i = 0; i < GAME_OVER_LINE_COUNT; i++)
+      canvas_text(
+        GAME_OVER_PANEL_X + 8,
+        GAME_OVER_PANEL_Y + 4 + i * GAME_OVER_LINE_HEIGHT,
+        lines[i],
+        i == 0 ? THEME_EMPHASIS_COLOR : THEME_TEXT_COLOR
+      );
+
+    canvas_push_band();
+  }
+
   keyboard_wait_key();
 }
 
@@ -470,8 +473,11 @@ run_game(Breadboard *board) {
     if (!game.paused)
       update_game(&game);
 
-    draw_game(&game);
-    canvas_push();
+    while (canvas_begin_band()) {
+      draw_game(&game);
+      canvas_push_band();
+    }
+
     board->frame_count++;
     vTaskDelay(pdMS_TO_TICKS(GAME_FRAME_INTERVAL_MS));
   }

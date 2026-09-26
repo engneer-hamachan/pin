@@ -643,15 +643,17 @@ draw_hiscore(int hiscore) {
 
 static void
 draw_title_screen(int selected_index, int hiscore) {
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  draw_illustration_board();
-  draw_illustration_parts();
-  draw_logo();
-  draw_title_menu(selected_index);
+  while (canvas_begin_band()) {
+    canvas_fill(THEME_BACKGROUND_COLOR);
+    draw_illustration_board();
+    draw_illustration_parts();
+    draw_logo();
+    draw_title_menu(selected_index);
 #if !defined(PIN_BOARD_WASM)
-  draw_hiscore(hiscore);
+    draw_hiscore(hiscore);
 #endif
-  canvas_push();
+    canvas_push_band();
+  }
 }
 
 TitleChoice

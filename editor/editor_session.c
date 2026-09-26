@@ -1,6 +1,7 @@
 #include "editor.h"
 
 #include "canvas.h"
+#include "keyboard.h"
 #include "core/editor.h"
 #include "core/text/utf8.h"
 #include "port/editor_canvas.h"
@@ -108,9 +109,11 @@ run_editor(const char *path) {
     .draw_cursor = draw_editor_canvas_cursor,
   };
 
-  canvas_fill(THEME_BACKGROUND_COLOR);
+  canvas_screen_fill(THEME_BACKGROUND_COLOR);
   core->active_canvas = &canvas;
+  keyboard_set_text_input(true);
   run_editor_loop(core, &canvas);
+  keyboard_set_text_input(false);
   core->active_canvas = NULL;
 
   vim_free(core);

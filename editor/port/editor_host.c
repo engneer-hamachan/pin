@@ -87,7 +87,7 @@ int
 editor_wait_byte(void) {
   while (byte_queue_count == 0) {
     if (canvas_changed) {
-      canvas_push();
+      canvas_screen_push();
       canvas_changed = false;
     }
 

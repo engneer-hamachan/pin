@@ -103,37 +103,39 @@ draw_page(
   int top_index
 ) {
 
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  canvas_text(PAGE_TEXT_X, PAGE_TITLE_Y, title, PAGE_TEXT_COLOR);
-  canvas_fill_rect(0, PAGE_TITLE_RULE_Y, CANVAS_WIDTH, 2, PAGE_RULE_COLOR);
+  while (canvas_begin_band()) {
+    canvas_fill(THEME_BACKGROUND_COLOR);
+    canvas_text(PAGE_TEXT_X, PAGE_TITLE_Y, title, PAGE_TEXT_COLOR);
+    canvas_fill_rect(0, PAGE_TITLE_RULE_Y, CANVAS_WIDTH, 2, PAGE_RULE_COLOR);
 
-  int y = PAGE_BODY_Y;
+    int y = PAGE_BODY_Y;
 
-  for (int i = top_index; i < line_count; i++) {
-    int line_height = compute_page_line_height(&lines[i]);
+    for (int i = top_index; i < line_count; i++) {
+      int line_height = compute_page_line_height(&lines[i]);
 
-    if (y + line_height > PAGE_BODY_Y + PAGE_BODY_HEIGHT)
-      break;
+      if (y + line_height > PAGE_BODY_Y + PAGE_BODY_HEIGHT)
+        break;
 
-    draw_page_line(&lines[i], y);
-    y += line_height;
+      draw_page_line(&lines[i], y);
+      y += line_height;
+    }
+
+    draw_page_scrollbar(lines, line_count, top_index);
+    canvas_line(
+      0,
+      PAGE_FOOTER_RULE_Y,
+      CANVAS_WIDTH - 1,
+      PAGE_FOOTER_RULE_Y,
+      PAGE_RULE_COLOR
+    );
+    canvas_text(
+      PAGE_TEXT_X,
+      PAGE_FOOTER_Y,
+      "j/k line  h/l page  other key back",
+      PAGE_HINT_COLOR
+    );
+    canvas_push_band();
   }
-
-  draw_page_scrollbar(lines, line_count, top_index);
-  canvas_line(
-    0,
-    PAGE_FOOTER_RULE_Y,
-    CANVAS_WIDTH - 1,
-    PAGE_FOOTER_RULE_Y,
-    PAGE_RULE_COLOR
-  );
-  canvas_text(
-    PAGE_TEXT_X,
-    PAGE_FOOTER_Y,
-    "j/k line  h/l page  other key back",
-    PAGE_HINT_COLOR
-  );
-  canvas_push();
 }
 
 void
