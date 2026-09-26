@@ -89,7 +89,9 @@ LDFLAGS := \
 
 .PHONY: all
 
-all: $(BUILD_DIR)/pin.js $(BUILD_DIR)/index.html
+PWA_FILES := manifest.webmanifest sw.js icon-192.png icon-512.png apple-touch-icon.png
+
+all: $(BUILD_DIR)/pin.js $(BUILD_DIR)/index.html $(addprefix $(BUILD_DIR)/,$(PWA_FILES))
 
 $(BUILD_DIR)/pin.js: $(OBJECTS) $(LIBMRUBY)
 	$(EMXX) $(LDFLAGS) $^ -o $@
@@ -100,6 +102,10 @@ $(LIBMRUBY): $(PICORUBY_CONFIG)
 $(OBJECTS): | $(LIBMRUBY)
 
 $(BUILD_DIR)/index.html: wasm/index.html
+	mkdir -p $(@D)
+	cp $< $@
+
+$(addprefix $(BUILD_DIR)/,$(PWA_FILES)): $(BUILD_DIR)/%: wasm/%
 	mkdir -p $(@D)
 	cp $< $@
 

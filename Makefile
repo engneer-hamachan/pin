@@ -14,6 +14,7 @@ wasm:
 release: wasm
 	mkdir -p docs
 	cp build/wasm/index.html build/wasm/pin.js build/wasm/pin.wasm docs/
+	cp $(addprefix build/wasm/,manifest.webmanifest sw.js icon-192.png icon-512.png apple-touch-icon.png) docs/
 
 save-firmware:
 	mkdir -p firmware
