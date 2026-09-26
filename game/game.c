@@ -59,7 +59,6 @@ reset_board(Breadboard *board) {
   board->cursor_row = START_CURSOR_ROW;
   board->cursor_column = START_CURSOR_COLUMN;
   board->message[0] = 0;
-  board->help_visible = false;
   board->needs_redraw = true;
 }
 
@@ -75,7 +74,7 @@ place_battery(Breadboard *board) {
 
 static int
 find_entry_weight(const PlacementEntry *entry) {
-  if (entry->kind == PART_KIND_BATTERY)
+  if (entry->kind == PART_KIND_BATTERY || entry->kind == PART_KIND_PINO)
     return 0;
 
   if (entry->kind == PART_KIND_LED &&
@@ -179,6 +178,12 @@ handle_game_key(Game *game, int key) {
 
   if (key == 'p') {
     toggle_pause(game);
+    return;
+  }
+
+  if (game->paused && key == 'i') {
+    if (part)
+      show_part_info(part->kind);
     return;
   }
 

@@ -21,6 +21,7 @@ enum class KeyKind : uint8_t {
   Character,
   Shift,
   Fn,
+  Ctrl,
   Modifier,
   Enter,
   Tab,
@@ -35,6 +36,7 @@ struct KeyboardKey {
 
 static bool shift_pressed = false;
 static bool fn_pressed = false;
+static bool ctrl_pressed = false;
 static bool key_down[KEY_CODE_COUNT] = {};
 static uint8_t repeat_code = 0;
 static TickType_t repeat_next_tick = 0;
@@ -53,7 +55,7 @@ lookup_key(uint8_t code) {
   case 3:
     return {KeyKind::Fn, 0};
   case 4:
-    return {KeyKind::Modifier, 0};
+    return {KeyKind::Ctrl, 0};
   case 5:
     return {KeyKind::Character, '1'};
   case 6:
@@ -337,6 +339,11 @@ push_pressed_key(uint8_t code) {
     }
   }
 
+  if (ctrl_pressed && key.character >= 'a' && key.character <= 'z') {
+    push_key(key.character & 0x1F);
+    return;
+  }
+
   char character = shift_pressed ? apply_shift(key.character) : key.character;
 
   if (character == '`') {
@@ -355,6 +362,9 @@ handle_key_event(uint8_t code, bool pressed) {
     return;
   case KeyKind::Fn:
     fn_pressed = pressed;
+    return;
+  case KeyKind::Ctrl:
+    ctrl_pressed = pressed;
     return;
   case KeyKind::Modifier:
   case KeyKind::None:

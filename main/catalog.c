@@ -33,6 +33,8 @@ find_part_name(PartKind kind) {
     return "Volume";
   case PART_KIND_CDS:
     return "CdS";
+  case PART_KIND_PINO:
+    return "Pino";
   default:
     return "Capacitor";
   }
@@ -128,6 +130,8 @@ find_terminal_name(PartKind kind, int terminal_index) {
     return find_transistor_terminal_name(terminal_index);
   case PART_KIND_RELAY:
     return find_relay_terminal_name(terminal_index);
+  case PART_KIND_PINO:
+    return find_pino_pin_name(terminal_index);
   default:
     return "lead";
   }

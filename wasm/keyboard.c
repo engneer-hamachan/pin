@@ -68,8 +68,16 @@ handle_key_down(
   (void)event_type;
   (void)user_data;
 
-  if (event->ctrlKey || event->metaKey || event->altKey)
+  if (event->metaKey || event->altKey)
     return false;
+
+  if (event->ctrlKey) {
+    if (event->key[0] < 'a' || event->key[0] > 'z' || event->key[1] != '\0')
+      return false;
+
+    push_key(event->key[0] & 0x1F);
+    return true;
+  }
 
   int key = translate_key(event->key);
 

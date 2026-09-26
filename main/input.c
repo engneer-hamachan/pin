@@ -1,9 +1,39 @@
 #include "breadboard.h"
 
+#include "editor.h"
 #include "keyboard.h"
+#include "page.h"
 #include "widget.h"
 
 #include <stdio.h>
+
+static const PageLine HELP_LINES[] = {
+  {PAGE_LINE_HEADING, NULL, "KEYS"},
+  {PAGE_LINE_KEY, "hjkl", "move the cursor"},
+  {PAGE_LINE_KEY, "arrows", "also move the cursor"},
+  {PAGE_LINE_KEY, "a/Enter", "add a part"},
+  {PAGE_LINE_KEY, "space", "press / flip a switch"},
+  {PAGE_LINE_KEY, "+ -", "change a value"},
+  {PAGE_LINE_KEY, "i", "part info"},
+  {PAGE_LINE_KEY, "x / BS", "remove a part"},
+  {PAGE_LINE_KEY, "c", "clear the board"},
+  {PAGE_LINE_KEY, "e", "edit Pin_data/app.rb"},
+  {PAGE_LINE_KEY, "v", "show the pino output"},
+#if !defined(PIN_BOARD_WASM)
+  {PAGE_LINE_KEY, "s", "save the board"},
+  {PAGE_LINE_KEY, "o", "load the board"},
+#endif
+  {PAGE_LINE_KEY, "?", "this help"},
+  {PAGE_LINE_KEY, "q", "quit"},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "WHILE PLACING"},
+  {PAGE_LINE_KEY, "Enter", "set the next pin"},
+  {PAGE_LINE_KEY, "space", "also sets the next pin"},
+  {PAGE_LINE_KEY, "` (ESC)", "cancel"},
+  {PAGE_LINE_KEY, "q", "also cancels"},
+};
+
+#define HELP_LINE_COUNT COUNT_PAGE_LINES(HELP_LINES)
 
 int
 decode_key(int key) {
@@ -76,6 +106,16 @@ load_file(Breadboard *board) {
 #endif
 
 static void
+edit_pino_program(Breadboard *board) {
+  stop_pino_program();
+
+  const char *result = run_editor(PINO_PROGRAM_PATH) ? "" : "edit failed";
+
+  snprintf(board->message, sizeof(board->message), "%s", result);
+  restart_pino_program();
+}
+
+static void
 handle_edit_key(Breadboard *board, int key) {
   Part *part = find_part_at(board, find_cursor_hole_index(board));
 
@@ -97,6 +137,10 @@ handle_edit_key(Breadboard *board, int key) {
     if (part)
       adjust_part(board, part, -1);
     break;
+  case 'i':
+    if (part)
+      show_part_info(part->kind);
+    break;
   case 'x':
   case KEY_BACKSPACE:
     if (part)
@@ -114,8 +158,14 @@ handle_edit_key(Breadboard *board, int key) {
     load_file(board);
     break;
 #endif
+  case 'e':
+    edit_pino_program(board);
+    break;
+  case 'v':
+    board->console_visible = true;
+    break;
   case '?':
-    board->help_visible = true;
+    show_page("HELP", HELP_LINES, HELP_LINE_COUNT);
     break;
   case 'q':
     if (widget_run_confirm("Quit?"))
@@ -131,8 +181,8 @@ handle_key(Breadboard *board, int key) {
   board->needs_redraw = true;
   board->message[0] = 0;
 
-  if (board->help_visible) {
-    board->help_visible = false;
+  if (board->console_visible) {
+    board->console_visible = false;
     return;
   }
 

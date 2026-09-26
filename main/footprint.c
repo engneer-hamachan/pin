@@ -1,5 +1,7 @@
 #include "breadboard.h"
 
+#define PINO_LOWER_ROW_OFFSET 5
+
 bool
 has_footprint(PartKind kind) {
   switch (kind) {
@@ -10,6 +12,7 @@ has_footprint(PartKind kind) {
   case PART_KIND_NPN:
   case PART_KIND_RELAY:
   case PART_KIND_VOLUME:
+  case PART_KIND_PINO:
     return true;
   default:
     return false;
@@ -30,6 +33,8 @@ count_terminals(PartKind kind) {
     return 3;
   case PART_KIND_RELAY:
     return 5;
+  case PART_KIND_PINO:
+    return PINO_PIN_COUNT;
   default:
     return 2;
   }
@@ -64,6 +69,8 @@ list_contact_terminal_pairs(
 static int
 compute_footprint_row_offset(PartKind kind, int terminal_index) {
   switch (kind) {
+  case PART_KIND_PINO:
+    return terminal_index < PINO_PIN_COUNT / 2 ? PINO_LOWER_ROW_OFFSET : 0;
   case PART_KIND_SEVEN_SEGMENT:
     return terminal_index < 5 ? 0 : 3;
   case PART_KIND_TACT_SWITCH:
@@ -78,6 +85,10 @@ compute_footprint_row_offset(PartKind kind, int terminal_index) {
 static int
 compute_footprint_column_offset(PartKind kind, int terminal_index) {
   switch (kind) {
+  case PART_KIND_PINO:
+    return terminal_index < PINO_PIN_COUNT / 2
+             ? terminal_index
+             : PINO_PIN_COUNT - 1 - terminal_index;
   case PART_KIND_SEVEN_SEGMENT:
     return terminal_index % 5;
   case PART_KIND_TACT_SWITCH:

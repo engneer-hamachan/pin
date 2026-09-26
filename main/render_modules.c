@@ -1,6 +1,7 @@
 #include "breadboard.h"
 
 #include "canvas.h"
+#include "theme.h"
 
 #define DARK_BODY_COLOR 0x202020
 #define BLUE_BODY_COLOR 0x2050B0
@@ -11,6 +12,17 @@
 #define SEGMENT_LIT_COLOR 0xFF3020
 #define RGB_CHANNEL_COUNT 3
 #define SEVEN_SEGMENT_COUNT 8
+#define PINO_BODY_COLOR 0x1E6B30
+#define PINO_LED_LIT_COLOR 0x30FF40
+#define PINO_LED_UNLIT_COLOR 0x204020
+#define PINO_USB_WIDTH 6
+#define PINO_USB_HEIGHT 10
+#define PINO_LED_SIZE 3
+#define PINO_PAD_COLOR 0xC8A040
+#define PINO_TRACE_COLOR 0x38A050
+#define PINO_SILK_COLOR 0xE8E8E8
+#define PINO_BUTTON_COLOR 0xB8B8B8
+#define PINO_CHIP_SIZE 15
 
 typedef struct {
   int left;
@@ -138,6 +150,153 @@ draw_seven_segments(const Part *part, int center_x, int center_y) {
 }
 
 static void
+draw_pino_pads(const Part *part, int center_y) {
+  for (int i = 0; i < part->terminal_count; i++) {
+    int x = compute_hole_x(part->terminal_hole_indices[i]);
+    int y = compute_hole_y(part->terminal_hole_indices[i]);
+    int stub_y = y < center_y ? y + 5 : y - 5;
+
+    canvas_line(x, y, x, stub_y, PINO_TRACE_COLOR);
+    canvas_fill_rect(x - 2, y - 2, 5, 5, PINO_PAD_COLOR);
+  }
+}
+
+static void
+draw_pino_chip_traces(int chip_x, int chip_y, int top, int bottom) {
+  int middle_x = chip_x + PINO_CHIP_SIZE / 2;
+
+  for (int i = -1; i <= 2; i++) {
+    int pad_x = middle_x - 11 + i * 7;
+    int pin_x = middle_x + i * 4 - 2;
+
+    canvas_line(pad_x, top, pad_x, chip_y - 5, PINO_TRACE_COLOR);
+    canvas_line(pad_x, chip_y - 5, pin_x, chip_y - 1, PINO_TRACE_COLOR);
+    canvas_line(
+      pad_x,
+      bottom,
+      pad_x,
+      chip_y + PINO_CHIP_SIZE + 4,
+      PINO_TRACE_COLOR
+    );
+    canvas_line(
+      pad_x,
+      chip_y + PINO_CHIP_SIZE + 4,
+      pin_x,
+      chip_y + PINO_CHIP_SIZE,
+      PINO_TRACE_COLOR
+    );
+  }
+}
+
+static void
+draw_pino_via_trace(int x, int y, int step_x, int step_y) {
+  int via_x = x + step_x * 5;
+  int via_y = y + step_y * 5;
+
+  canvas_line(x, y, via_x, via_y, PINO_TRACE_COLOR);
+  canvas_fill_rect(via_x - 1, via_y - 1, 3, 3, PINO_TRACE_COLOR);
+  canvas_pixel(via_x, via_y, DARK_BODY_COLOR);
+}
+
+static void
+draw_pino_via_traces(const Bounds *bounds, int first_column, int step_x) {
+  for (int i = 0; i < 4; i++) {
+    int x = bounds->left + 3 + (first_column + i) * 7;
+
+    draw_pino_via_trace(x, bounds->top + 8, step_x, 1);
+    draw_pino_via_trace(x, bounds->bottom - 8, step_x, -1);
+  }
+}
+
+static void
+draw_pino_chip(int x, int y) {
+  for (int i = 1; i < PINO_CHIP_SIZE; i += 2) {
+    canvas_pixel(x + i, y - 1, METAL_COLOR);
+    canvas_pixel(x + i, y + PINO_CHIP_SIZE, METAL_COLOR);
+    canvas_pixel(x - 1, y + i, METAL_COLOR);
+    canvas_pixel(x + PINO_CHIP_SIZE, y + i, METAL_COLOR);
+  }
+
+  canvas_fill_rect(x, y, PINO_CHIP_SIZE, PINO_CHIP_SIZE, DARK_BODY_COLOR);
+  canvas_pixel(x + 2, y + 2, METAL_COLOR);
+}
+
+static void
+draw_pino_flash(int x, int center_y) {
+  for (int i = 1; i < 8; i += 2) {
+    canvas_pixel(x + i, center_y - 4, METAL_COLOR);
+    canvas_pixel(x + i, center_y + 4, METAL_COLOR);
+  }
+
+  canvas_fill_rect(x, center_y - 3, 8, 7, DARK_BODY_COLOR);
+}
+
+static void
+draw_pino(const Part *part, const Bounds *bounds, int center_y) {
+  int width = bounds->right - bounds->left + 1;
+  int height = bounds->bottom - bounds->top + 1;
+  int chip_x = bounds->left + width / 2 - PINO_CHIP_SIZE / 2;
+  int chip_y = center_y - PINO_CHIP_SIZE / 2;
+  int flash_x = chip_x - 22;
+
+  canvas_fill_rect(bounds->left, bounds->top, width, height, PINO_BODY_COLOR);
+  draw_pino_pads(part, center_y);
+  draw_pino_chip_traces(chip_x, chip_y, bounds->top + 8, bounds->bottom - 8);
+  draw_pino_via_traces(bounds, 2, 1);
+  draw_pino_via_traces(bounds, 13, -1);
+
+  for (int i = -2; i <= 2; i += 2)
+    canvas_line(
+      flash_x + 8,
+      center_y + i,
+      chip_x - 2,
+      center_y + i,
+      PINO_TRACE_COLOR
+    );
+
+  draw_pino_chip(chip_x, chip_y);
+  draw_pino_flash(flash_x, center_y);
+  canvas_fill_rect(
+    chip_x + PINO_CHIP_SIZE + 5,
+    center_y - 3,
+    3,
+    7,
+    METAL_COLOR
+  );
+  canvas_fill_rect(bounds->left + 20, center_y + 2, 7, 7, PINO_BUTTON_COLOR);
+  canvas_fill_circle(bounds->left + 23, center_y + 5, 2, PINO_SILK_COLOR);
+
+  for (int i = -6; i <= 6; i += 6)
+    canvas_fill_rect(bounds->right - 6, center_y + i - 1, 3, 3, PINO_PAD_COLOR);
+
+  canvas_fill_rect(
+    bounds->left - PINO_USB_WIDTH / 2,
+    center_y - PINO_USB_HEIGHT / 2,
+    PINO_USB_WIDTH,
+    PINO_USB_HEIGHT,
+    METAL_COLOR
+  );
+  canvas_fill_rect(
+    bounds->left + PINO_USB_WIDTH,
+    center_y - PINO_USB_HEIGHT / 2 - PINO_LED_SIZE,
+    PINO_LED_SIZE,
+    PINO_LED_SIZE,
+    is_pino_led_lit() ? PINO_LED_LIT_COLOR : PINO_LED_UNLIT_COLOR
+  );
+
+  const char *label = find_part_name(PART_KIND_PINO);
+  int label_left = chip_x + PINO_CHIP_SIZE + 12;
+  int label_width = bounds->right - 8 - label_left;
+
+  canvas_text(
+    label_left + (label_width - canvas_text_width(label)) / 2,
+    center_y - CANVAS_FONT_HEIGHT / 2,
+    label,
+    PINO_SILK_COLOR
+  );
+}
+
+static void
 draw_module_pins(const Part *part) {
   for (int i = 0; i < part->terminal_count; i++) {
     canvas_pixel(
@@ -203,6 +362,9 @@ draw_module_part(const Part *part) {
       7,
       part->energized ? ACTIVE_COLOR : METAL_COLOR
     );
+    break;
+  case PART_KIND_PINO:
+    draw_pino(part, &bounds, center_y);
     break;
   default:
     break;

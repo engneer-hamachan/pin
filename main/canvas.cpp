@@ -17,6 +17,7 @@
 
 static lgfx::LGFX_Device *display = nullptr;
 static lgfx::LGFX_Sprite *sprite = nullptr;
+static lgfx::LGFX_Sprite *row_sprite = nullptr;
 
 #if defined(PIN_BOARD_TFT_ST7789) || defined(PIN_BOARD_TFT_ILI9341)
 
@@ -120,6 +121,18 @@ canvas_begin(void) {
   sprite->setFont(&lgfx::v1::fonts::efontJA_12);
   sprite->setTextSize(1);
   sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
+
+  row_sprite = new lgfx::LGFX_Sprite(sprite);
+  row_sprite->setPsram(false);
+  row_sprite->setColorDepth(16);
+
+  if (row_sprite->createSprite(CANVAS_WIDTH, CANVAS_ROW_HEIGHT) == nullptr) {
+    abort();
+  }
+
+  row_sprite->setFont(&lgfx::v1::fonts::efontJA_12);
+  row_sprite->setTextSize(1);
+  row_sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
 }
 
 void
@@ -175,4 +188,30 @@ canvas_push(void) {
     (display->width() - CANVAS_WIDTH) / 2,
     (display->height() - CANVAS_HEIGHT) / 2
   );
+}
+
+void
+canvas_row_fill(uint32_t color) {
+  row_sprite->fillScreen(color);
+}
+
+void
+canvas_row_fill_rect(int x, int y, int width, int height, uint32_t color) {
+  row_sprite->fillRect(x, y, width, height, color);
+}
+
+void
+canvas_row_line(int x0, int y0, int x1, int y1, uint32_t color) {
+  row_sprite->drawLine(x0, y0, x1, y1, color);
+}
+
+void
+canvas_row_text(int x, int y, const char *text, uint32_t color) {
+  row_sprite->setTextColor(color);
+  row_sprite->drawString(text, x, y);
+}
+
+void
+canvas_row_commit(int y) {
+  row_sprite->pushSprite(sprite, 0, y);
 }

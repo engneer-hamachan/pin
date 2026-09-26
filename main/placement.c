@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-#define CATEGORY_COUNT 5
+#define CATEGORY_COUNT 6
 #define CATEGORY_ENTRY_CAPACITY 6
 #define NO_HOLE_INDEX -1
 
@@ -63,6 +63,13 @@ static const PlacementCategory CATEGORIES[CATEGORY_COUNT] = {
     {
       {"Diode", PART_KIND_DIODE, 0},
       {"NPN transistor", PART_KIND_NPN, 0},
+    },
+  },
+  {
+    "Microcontroller",
+    1,
+    {
+      {"Pino (Pico)", PART_KIND_PINO, 0},
     },
   },
 };
@@ -179,6 +186,11 @@ confirm_placement(Breadboard *board) {
   }
 
   PartKind kind = board->placing_entry->kind;
+
+  if (kind == PART_KIND_PINO && count_parts_of_kind(board, kind) > 0) {
+    snprintf(board->message, sizeof(board->message), "one pino only");
+    return;
+  }
 
   if (!has_footprint(kind) &&
       board->placing_first_hole_index == NO_HOLE_INDEX) {

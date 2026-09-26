@@ -109,7 +109,7 @@ add_part_npn(Breadboard *board, Part *part) {
 
 static void
 build_part_elements(Breadboard *board, Part *part) {
-  const int *nodes = part->terminal_node_indices;
+  const int16_t *nodes = part->terminal_node_indices;
 
   switch (part->kind) {
   case PART_KIND_RESISTOR:
@@ -228,6 +228,9 @@ build_part_elements(Breadboard *board, Part *part) {
   case PART_KIND_CAPACITOR:
     add_part_capacitor(board, part, 0.001);
     break;
+  case PART_KIND_PINO:
+    build_pino_elements(board, part);
+    break;
   default:
     break;
   }
@@ -345,6 +348,9 @@ configure_part_elements(Breadboard *board, Part *part) {
       0,
       200000.0 / (double)(1 << part->light_level)
     );
+    break;
+  case PART_KIND_PINO:
+    configure_pino_elements(board, part);
     break;
   default:
     break;
