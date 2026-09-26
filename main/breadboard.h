@@ -165,6 +165,7 @@ const PlacementEntry *find_placement_entry(int entry_index);
 void start_placement(Breadboard *board);
 void cancel_placement(Breadboard *board);
 void handle_placement_key(Breadboard *board, int key);
+bool has_placing_first_hole(const Breadboard *board);
 int compute_placement_hole_indices(const Breadboard *board, int *hole_indices);
 bool is_placement_allowed(Breadboard *board);
 void

@@ -2,6 +2,7 @@
 
 #include "canvas.h"
 #include "keyboard.h"
+#include "page.h"
 #include "theme.h"
 #include "widget.h"
 
@@ -46,11 +47,30 @@ typedef struct {
   int hiscore;
   int clear_frames;
   bool room_check_pending;
-  bool paused;
-  const PlacementEntry *paused_entry;
+  const PlacementEntry *dealt_entry;
   bool quit;
   GameOverReason over_reason;
 } Game;
+
+static const PageLine HELP_LINES[] = {
+  {PAGE_LINE_HEADING, NULL, "KEYS"},
+  {PAGE_LINE_KEY, "hjkl", "move the cursor"},
+  {PAGE_LINE_KEY, "arrows", "also move the cursor"},
+  {PAGE_LINE_KEY, "Enter", "pick up the part"},
+  {PAGE_LINE_KEY, "space", "press / flip a switch"},
+  {PAGE_LINE_KEY, "+ -", "change a value"},
+  {PAGE_LINE_KEY, "i", "part info"},
+  {PAGE_LINE_KEY, "?", "this help"},
+  {PAGE_LINE_KEY, "q", "quit to the title"},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "WHILE PLACING"},
+  {PAGE_LINE_KEY, "Enter", "set the next pin"},
+  {PAGE_LINE_KEY, "` (ESC)", "put the part down"},
+  {PAGE_LINE_TEXT, NULL, "Once the first pin is set, ` (ESC)"},
+  {PAGE_LINE_TEXT, NULL, "redoes it instead."},
+};
+
+#define HELP_LINE_COUNT COUNT_PAGE_LINES(HELP_LINES)
 
 static void
 reset_board(Breadboard *board) {
@@ -111,7 +131,8 @@ pick_next_entry(void) {
 
 static void
 deal_next_part(Game *game) {
-  game->board->placing_entry = pick_next_entry();
+  game->dealt_entry = pick_next_entry();
+  game->board->placing_entry = game->dealt_entry;
   game->room_check_pending = true;
 }
 
@@ -151,18 +172,42 @@ redo_first_pin(Breadboard *board) {
 }
 
 static void
-toggle_pause(Game *game) {
+handle_holding_key(Game *game, int key) {
   Breadboard *board = game->board;
 
-  if (game->paused) {
-    board->placing_entry = game->paused_entry;
-    game->paused = false;
-    return;
+  switch (key) {
+  case KEY_ENTER:
+    place_part(game);
+    break;
+  case KEY_ESCAPE:
+    if (has_placing_first_hole(board))
+      redo_first_pin(board);
+    else
+      cancel_placement(board);
+    break;
+  default:
+    break;
   }
+}
 
-  game->paused_entry = board->placing_entry;
-  board->placing_entry = NULL;
-  game->paused = true;
+static void
+handle_released_key(Game *game, Part *part, int key) {
+  Breadboard *board = game->board;
+
+  switch (key) {
+  case KEY_ENTER:
+    board->placing_entry = game->dealt_entry;
+    break;
+  case 'i':
+    if (part)
+      show_part_info(part->kind);
+    break;
+  case '?':
+    show_page("HELP", HELP_LINES, HELP_LINE_COUNT);
+    break;
+  default:
+    break;
+  }
 }
 
 static void
@@ -176,24 +221,12 @@ handle_game_key(Game *game, int key) {
   if (move_cursor_by_key(board, key))
     return;
 
-  if (key == 'p') {
-    toggle_pause(game);
-    return;
-  }
-
-  if (game->paused && key == 'i') {
-    if (part)
-      show_part_info(part->kind);
-    return;
-  }
-
-  if (game->paused && key != 'q')
-    return;
+  if (board->placing_entry)
+    handle_holding_key(game, key);
+  else
+    handle_released_key(game, part, key);
 
   switch (key) {
-  case KEY_ENTER:
-    place_part(game);
-    break;
   case ' ':
     if (part)
       operate_part(board, part);
@@ -206,9 +239,6 @@ handle_game_key(Game *game, int key) {
   case '-':
     if (part)
       adjust_part(board, part, -1);
-    break;
-  case KEY_ESCAPE:
-    redo_first_pin(board);
     break;
   case 'q':
     if (widget_run_confirm("Quit game?"))
@@ -261,7 +291,7 @@ update_game(Game *game) {
   if (game->room_check_pending) {
     game->room_check_pending = false;
 
-    if (!can_place_anywhere(board, board->placing_entry->kind))
+    if (!can_place_anywhere(board, game->dealt_entry->kind))
       game->over_reason = GAME_OVER_NO_ROOM;
   }
 }
@@ -312,18 +342,6 @@ format_game_header_right(const Game *game, char *text, size_t text_size) {
 }
 
 static void
-format_pause_header_right(Breadboard *board, char *text, size_t text_size) {
-  const Part *part = find_part_at(board, find_cursor_hole_index(board));
-
-  if (part == NULL) {
-    snprintf(text, text_size, "PAUSE");
-    return;
-  }
-
-  format_part_reading(part, text, text_size);
-}
-
-static void
 draw_rail_markers(const Breadboard *board) {
   int hole_indices[PART_TERMINAL_CAPACITY];
   int hole_count = compute_placement_hole_indices(board, hole_indices);
@@ -354,7 +372,7 @@ draw_game(Game *game) {
 
   if (game->clear_frames > 0) {
     draw_clear_markers(board);
-  } else if (!game->paused) {
+  } else if (board->placing_entry) {
     draw_placement_preview(board);
 
     if (is_placement_on_rail(board))
@@ -363,12 +381,12 @@ draw_game(Game *game) {
 
   draw_cursor(board);
 
-  if (game->paused) {
-    format_header_title(board, title, sizeof title);
-    format_pause_header_right(board, right_text, sizeof right_text);
-  } else {
+  if (board->placing_entry) {
     format_placement_title(board, title, sizeof title);
     format_game_header_right(game, right_text, sizeof right_text);
+  } else {
+    format_header_title(board, title, sizeof title);
+    format_header_right(board, right_text, sizeof right_text);
   }
 
   widget_draw_header(title, right_text);
@@ -470,8 +488,7 @@ run_game(Breadboard *board) {
     if (game.quit)
       break;
 
-    if (!game.paused)
-      update_game(&game);
+    update_game(&game);
 
     while (canvas_begin_band()) {
       draw_game(&game);
