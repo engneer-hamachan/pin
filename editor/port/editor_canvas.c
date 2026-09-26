@@ -144,7 +144,7 @@ draw_editor_canvas_cursor(
   int pixel_top = compute_row_pixel_top(canvas, row_index);
 
   if (mode == VIM_MODE_INSERT)
-    canvas_fill_rect(
+    canvas_screen_fill_rect(
       pixel_left,
       pixel_top + 1,
       CURSOR_THICKNESS,
@@ -152,7 +152,7 @@ draw_editor_canvas_cursor(
       THEME_SELECTED_COLOR
     );
   else
-    canvas_fill_rect(
+    canvas_screen_fill_rect(
       pixel_left,
       pixel_top + canvas->row_height - CURSOR_THICKNESS,
       canvas->char_width,

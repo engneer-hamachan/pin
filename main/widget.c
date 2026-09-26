@@ -169,41 +169,43 @@ draw_menu(
   if (top_index < 0)
     top_index = 0;
 
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  draw_titled_panel(panel_x, panel_y, panel_width, panel_height, title);
+  while (canvas_begin_band()) {
+    canvas_fill(THEME_BACKGROUND_COLOR);
+    draw_titled_panel(panel_x, panel_y, panel_width, panel_height, title);
 
-  for (int row = 0; row < visible_count; row++) {
-    int index = top_index + row;
-    int row_y = panel_y + 16 + row * WIDGET_ROW_HEIGHT;
+    for (int row = 0; row < visible_count; row++) {
+      int index = top_index + row;
+      int row_y = panel_y + 16 + row * WIDGET_ROW_HEIGHT;
 
-    if (index == selected_index) {
-      canvas_fill_rect(
-        panel_x + 2,
-        row_y,
-        panel_width - 4,
-        WIDGET_ROW_HEIGHT,
-        THEME_BOX_COLOR
+      if (index == selected_index) {
+        canvas_fill_rect(
+          panel_x + 2,
+          row_y,
+          panel_width - 4,
+          WIDGET_ROW_HEIGHT,
+          THEME_BOX_COLOR
+        );
+      }
+
+      canvas_text(
+        panel_x + 8,
+        compute_centered_text_y(row_y, WIDGET_ROW_HEIGHT),
+        items[index],
+        index == selected_index ? THEME_SELECTED_COLOR : THEME_TEXT_COLOR
       );
     }
 
-    canvas_text(
-      panel_x + 8,
-      compute_centered_text_y(row_y, WIDGET_ROW_HEIGHT),
-      items[index],
-      index == selected_index ? THEME_SELECTED_COLOR : THEME_TEXT_COLOR
+    draw_scrollbar(
+      panel_x + panel_width - 4,
+      panel_y + 16,
+      visible_count * WIDGET_ROW_HEIGHT,
+      top_index,
+      visible_count,
+      item_count
     );
+
+    canvas_push_band();
   }
-
-  draw_scrollbar(
-    panel_x + panel_width - 4,
-    panel_y + 16,
-    visible_count * WIDGET_ROW_HEIGHT,
-    top_index,
-    visible_count,
-    item_count
-  );
-
-  canvas_push();
 }
 
 int
@@ -249,16 +251,18 @@ draw_confirm(const char *question) {
   int two_line_height = WIDGET_ROW_HEIGHT + CANVAS_FONT_HEIGHT;
   int question_y = panel_y + (CONFIRM_PANEL_HEIGHT - two_line_height) / 2;
 
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  widget_draw_panel(0, panel_y, CANVAS_WIDTH, CONFIRM_PANEL_HEIGHT);
-  canvas_text(4, question_y, question, THEME_TEXT_COLOR);
-  canvas_text(
-    4,
-    question_y + WIDGET_ROW_HEIGHT,
-    CONFIRM_HINT,
-    THEME_EMPHASIS_COLOR
-  );
-  canvas_push();
+  while (canvas_begin_band()) {
+    canvas_fill(THEME_BACKGROUND_COLOR);
+    widget_draw_panel(0, panel_y, CANVAS_WIDTH, CONFIRM_PANEL_HEIGHT);
+    canvas_text(4, question_y, question, THEME_TEXT_COLOR);
+    canvas_text(
+      4,
+      question_y + WIDGET_ROW_HEIGHT,
+      CONFIRM_HINT,
+      THEME_EMPHASIS_COLOR
+    );
+    canvas_push_band();
+  }
 }
 
 bool

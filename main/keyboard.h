@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,6 +18,7 @@ extern "C" {
 void keyboard_begin(void);
 int keyboard_read_key(void);
 int keyboard_wait_key(void);
+void keyboard_set_text_input(bool enabled);
 
 #ifdef __cplusplus
 }

@@ -5,6 +5,7 @@
 
 #include "theme.h"
 #include "core/syntax/picoruby/highlight.h"
+#include "port/editor_parse.h"
 #include <prism.h>
 
 typedef enum {
@@ -295,6 +296,8 @@ editor_highlight_init(
 
 void
 editor_highlight_run(editor_highlight_context_t *context) {
+  struct mrc_prism_arena_block *outer_arena = begin_editor_parse();
+
   pm_lex_callback_t highlight_lex_config = {
     .data = context,
     .callback = highlight_prism_token,
@@ -310,6 +313,7 @@ editor_highlight_run(editor_highlight_context_t *context) {
   pm_node_t *node = pm_parse(&parser);
   pm_node_destroy(&parser, node);
   pm_parser_free(&parser);
+  end_editor_parse(outer_arena);
 
   if (context->last_end < context->source_byte_length) {
     context->write_segment(

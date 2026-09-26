@@ -8,30 +8,14 @@
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include <stdlib.h>
 
 #define FRAME_INTERVAL_MS 50
 #define INITIAL_CURSOR_ROW 2
 
 static Breadboard board;
 
-static void *
-resize_circuit_buffer(void *context, void *buffer, size_t byte_count) {
-  (void)context;
-
-  if (byte_count == 0) {
-    free(buffer);
-    return NULL;
-  }
-
-  return realloc(buffer, byte_count);
-}
-
 static void
 init_breadboard(void) {
-  if (!circuit_init(&board.circuit, NET_COUNT, resize_circuit_buffer, NULL))
-    abort();
-
   board.cursor_row = INITIAL_CURSOR_ROW;
   board.needs_redraw = true;
   cancel_placement(&board);

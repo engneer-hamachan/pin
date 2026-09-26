@@ -1,6 +1,4 @@
 #include "circuit.h"
-#include <limits.h>
-#include <stdint.h>
 #include <string.h>
 
 static int root(Circuit *circuit, int node) {
@@ -8,41 +6,16 @@ static int root(Circuit *circuit, int node) {
   return node;
 }
 
-bool circuit_init(Circuit *circuit, int maximum_nodes, CircuitAllocator allocate, void *context) {
-  *circuit = (Circuit){0};
-  circuit->allocate = allocate;
-  circuit->context = context;
-  if (maximum_nodes < 1 || maximum_nodes > 32767) return false;
-  circuit->parents = allocate(context, NULL, (size_t)maximum_nodes * 2 * sizeof(int));
-  if (!circuit->parents) return false;
-  circuit->maximum_nodes = maximum_nodes;
-  circuit->node_indices = circuit->parents + maximum_nodes;
-  circuit_clear(circuit);
-  return true;
-}
-
 void circuit_clear(Circuit *circuit) {
   circuit->count = 0;
   circuit->node_count = 0;
   circuit->topology_dirty = true;
-  for (int i = 0; i < circuit->maximum_nodes; i++) {
+  for (int i = 0; i < CIRCUIT_NODE_CAPACITY; i++) {
     circuit->parents[i] = i;
     circuit->node_indices[i] = -1;
   }
-  if (circuit->matrix.values) circuit->allocate(circuit->context, circuit->matrix.values, 0);
   matrix_attach_buffer(&circuit->matrix, 0, NULL);
   circuit->voltages = NULL;
-  if (circuit->elements) circuit->allocate(circuit->context, circuit->elements, 0);
-  circuit->elements = NULL;
-  circuit->capacity = 0;
-}
-
-void circuit_release(Circuit *circuit) {
-  circuit_clear(circuit);
-  if (circuit->parents) circuit->allocate(circuit->context, circuit->parents, 0);
-  circuit->parents = NULL;
-  circuit->node_indices = NULL;
-  circuit->maximum_nodes = 0;
 }
 
 void circuit_connect(Circuit *circuit, int first, int second) {
@@ -51,23 +24,15 @@ void circuit_connect(Circuit *circuit, int first, int second) {
 }
 
 int circuit_add(Circuit *circuit, CircuitElement element) {
-  if (circuit->count == circuit->capacity) {
-    if (circuit->capacity > INT_MAX - 4) return -1;
-    int capacity = circuit->capacity + 4;
-    if ((size_t)capacity > SIZE_MAX / sizeof(CircuitElement)) return -1;
-    void *elements = circuit->allocate(circuit->context, circuit->elements, (size_t)capacity * sizeof(CircuitElement));
-    if (!elements) return -1;
-    circuit->elements = elements;
-    circuit->capacity = capacity;
-  }
+  if (circuit->count == CIRCUIT_ELEMENT_CAPACITY) return -1;
   element.enabled = true;
   circuit->elements[circuit->count] = element;
   circuit->topology_dirty = true;
   return circuit->count++;
 }
 
-static bool compile_nodes(Circuit *circuit) {
-  for (int i = 0; i < circuit->maximum_nodes; i++) circuit->node_indices[i] = -1;
+static void compile_nodes(Circuit *circuit) {
+  for (int i = 0; i < CIRCUIT_NODE_CAPACITY; i++) circuit->node_indices[i] = -1;
   int count = 0;
   for (int i = 0; i < circuit->count; i++) {
     CircuitElement *element = &circuit->elements[i];
@@ -78,18 +43,13 @@ static bool compile_nodes(Circuit *circuit) {
     }
   }
   if (count != circuit->matrix.size) {
-    if (count && count > (INT_MAX - 2 * count) / count) return false;
-    size_t elements = (size_t)count * (count + 2);
-    if (elements > SIZE_MAX / sizeof(double)) return false;
-    double *buffer = circuit->allocate(circuit->context, circuit->matrix.values, elements * sizeof(double));
-    if (count && !buffer) return false;
+    double *buffer = count ? circuit->matrix_buffer : NULL;
     matrix_attach_buffer(&circuit->matrix, count, buffer);
     circuit->voltages = count ? buffer + (size_t)count * (count + 1) : NULL;
     if (count) memset(circuit->voltages, 0, (size_t)count * sizeof(double));
   }
   circuit->node_count = count;
   circuit->topology_dirty = false;
-  return true;
 }
 
 static int node_index(Circuit *circuit, int pin) {
@@ -186,9 +146,9 @@ static bool update_states(Circuit *circuit) {
   return changed;
 }
 
-bool circuit_step(Circuit *circuit, double dt, int iterations) {
-  if (circuit->topology_dirty && !compile_nodes(circuit)) return false;
-  if (!circuit->node_count) return true;
+void circuit_step(Circuit *circuit, double dt, int iterations) {
+  if (circuit->topology_dirty) compile_nodes(circuit);
+  if (!circuit->node_count) return;
   for (int iteration = 0; iteration < iterations; iteration++) {
     matrix_clear(&circuit->matrix);
     for (int i = 0; i < circuit->node_count; i++) {
@@ -220,5 +180,4 @@ bool circuit_step(Circuit *circuit, double dt, int iterations) {
       break;
     }
   }
-  return true;
 }

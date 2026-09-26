@@ -113,23 +113,25 @@ draw_screen(Breadboard *board) {
   char title[TEXT_SIZE];
   char right_text[TEXT_SIZE];
 
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  draw_board();
-  draw_parts(board);
-
-  if (board->placing_entry)
-    draw_placement_preview(board);
-
-  draw_cursor(board);
-
   format_header_title(board, title, sizeof title);
   format_header_right(board, right_text, sizeof right_text);
-  widget_draw_header(title, right_text);
 
-  if (board->console_visible)
-    draw_console();
+  while (canvas_begin_band()) {
+    canvas_fill(THEME_BACKGROUND_COLOR);
+    draw_board();
+    draw_parts(board);
 
-  canvas_push();
+    if (board->placing_entry)
+      draw_placement_preview(board);
+
+    draw_cursor(board);
+    widget_draw_header(title, right_text);
+
+    if (board->console_visible)
+      draw_console();
+
+    canvas_push_band();
+  }
 }
 
 static int

@@ -1,7 +1,6 @@
 #include "breadboard.h"
 
 #include <math.h>
-#include <stdio.h>
 
 #define SIMULATION_STEP_SECONDS 0.05
 #define SOLVER_ITERATION_COUNT 12
@@ -232,16 +231,11 @@ solve_circuit(Breadboard *board) {
   for (int i = 0; i < board->part_count; i++)
     configure_part_elements(board, &board->parts[i]);
 
-  if (!circuit_step(
-        &board->circuit,
-        SIMULATION_STEP_SECONDS,
-        SOLVER_ITERATION_COUNT
-      )) {
-
-    snprintf(board->message, sizeof(board->message), "No memory");
-    return;
-  }
-
+  circuit_step(
+    &board->circuit,
+    SIMULATION_STEP_SECONDS,
+    SOLVER_ITERATION_COUNT
+  );
   board->short_circuit = false;
 
   for (int i = 0; i < board->part_count; i++)
