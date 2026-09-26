@@ -2,6 +2,7 @@
 
 #include "canvas.h"
 #include "keyboard.h"
+#include "page.h"
 #include "theme.h"
 #include "widget.h"
 
@@ -85,24 +86,6 @@
 #define MENU_MARKER_X 142
 #define MENU_TEXT_COLOR 0xF4E8D0
 #define HISCORE_Y 120
-#define HOW_TO_PLAY_TEXT_X 8
-#define HOW_TO_PLAY_KEY_TEXT_X 56
-#define HOW_TO_PLAY_TITLE_Y 2
-#define HOW_TO_PLAY_TITLE_RULE_Y 16
-#define HOW_TO_PLAY_BODY_Y 20
-#define HOW_TO_PLAY_LINE_HEIGHT 12
-#define HOW_TO_PLAY_VISIBLE_LINE_COUNT 8
-#define HOW_TO_PLAY_FOOTER_RULE_Y 119
-#define HOW_TO_PLAY_FOOTER_Y 121
-#define HOW_TO_PLAY_SCROLLBAR_X 234
-#define HOW_TO_PLAY_SCROLLBAR_WIDTH 2
-#define HOW_TO_PLAY_TEXT_COLOR 0xF4E8D0
-#define HOW_TO_PLAY_HEADING_COLOR 0xF8C020
-#define HOW_TO_PLAY_KEY_COLOR 0xF0501A
-#define HOW_TO_PLAY_RULE_COLOR 0xF0501A
-#define HOW_TO_PLAY_HINT_COLOR 0x8A8A8A
-#define HOW_TO_PLAY_SCROLLBAR_TRACK_COLOR 0x303030
-#define HOW_TO_PLAY_SCROLLBAR_THUMB_COLOR 0xF4E8D0
 
 typedef enum {
   TITLE_ITEM_START,
@@ -129,94 +112,81 @@ static const char *const TITLE_ITEM_LABELS[TITLE_ITEM_COUNT] = {
   "SIMULATOR",
 };
 
-typedef enum {
-  HOW_TO_PLAY_BLANK,
-  HOW_TO_PLAY_HEADING,
-  HOW_TO_PLAY_TEXT,
-  HOW_TO_PLAY_KEY
-} HowToPlayLineKind;
-
-typedef struct {
-  HowToPlayLineKind kind;
-  const char *key;
-  const char *text;
-} HowToPlayLine;
-
-static const HowToPlayLine HOW_TO_PLAY_LINES[] = {
-  {HOW_TO_PLAY_HEADING, NULL, "GOAL"},
-  {HOW_TO_PLAY_TEXT, NULL, "Parts are dealt to you one by one."},
-  {HOW_TO_PLAY_TEXT, NULL, "Put each one on the breadboard."},
-  {HOW_TO_PLAY_TEXT, NULL, "Light an LED, sound the buzzer or"},
-  {HOW_TO_PLAY_TEXT, NULL, "spin the motor, and every part on"},
-  {HOW_TO_PLAY_TEXT, NULL, "that circuit is cleared: 1 point"},
-  {HOW_TO_PLAY_TEXT, NULL, "per part. The battery stays."},
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "THE BOARD"},
-  {HOW_TO_PLAY_TEXT, NULL, "A 5V battery sits on the top-left"},
-  {HOW_TO_PLAY_TEXT, NULL, "rails. Red line is +, blue is -."},
-  {HOW_TO_PLAY_TEXT, NULL, "The top and bottom rails are not"},
-  {HOW_TO_PLAY_TEXT, NULL, "joined: wire them to use both."},
-  {HOW_TO_PLAY_TEXT, NULL, "Holes a-e in a column are joined,"},
-  {HOW_TO_PLAY_TEXT, NULL, "and so are f-j. The groove in the"},
-  {HOW_TO_PLAY_TEXT, NULL, "middle keeps the two apart."},
-  {HOW_TO_PLAY_TEXT, NULL, "Only jumper wires may use rails."},
-  {HOW_TO_PLAY_TEXT, NULL, "A red box marks a blocked pin."},
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "PLACING"},
-  {HOW_TO_PLAY_TEXT, NULL, "The header shows the part and the"},
-  {HOW_TO_PLAY_TEXT, NULL, "pin to set next, e.g. anode+."},
-  {HOW_TO_PLAY_TEXT, NULL, "Lead parts take two pins: move and"},
-  {HOW_TO_PLAY_TEXT, NULL, "press Enter for each. Modules drop"},
-  {HOW_TO_PLAY_TEXT, NULL, "at the cursor with one Enter."},
-  {HOW_TO_PLAY_TEXT, NULL, "Jumper wires come 3 times in 10."},
-  {HOW_TO_PLAY_TEXT, NULL, "Single LEDs are always red, and no"},
-  {HOW_TO_PLAY_TEXT, NULL, "battery is ever dealt."},
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "CLEARING"},
-  {HOW_TO_PLAY_TEXT, NULL, "When an output runs, the parts on"},
-  {HOW_TO_PLAY_TEXT, NULL, "its current path blink yellow and"},
-  {HOW_TO_PLAY_TEXT, NULL, "the header says CLEAR!. Then they"},
-  {HOW_TO_PLAY_TEXT, NULL, "are removed with their wires."},
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "TIPS"},
-  {HOW_TO_PLAY_TEXT, NULL, "An LED needs a resistor in series."},
-  {HOW_TO_PLAY_TEXT, NULL, "A resistor starts at 220 ohm."},
-  {HOW_TO_PLAY_TEXT, NULL, "10 ohm burns a red LED; 10k ohm or"},
-  {HOW_TO_PLAY_TEXT, NULL, "more keeps it dark."},
-  {HOW_TO_PLAY_TEXT, NULL, "LEDs and diodes have a direction:"},
-  {HOW_TO_PLAY_TEXT, NULL, "anode+ goes toward battery +."},
-  {HOW_TO_PLAY_TEXT, NULL, "space on a tact switch presses it,"},
-  {HOW_TO_PLAY_TEXT, NULL, "on a slide switch flips it."},
-  {HOW_TO_PLAY_TEXT, NULL, "+ / - on a resistor, volume or CdS"},
-  {HOW_TO_PLAY_TEXT, NULL, "changes its value."},
-  {HOW_TO_PLAY_TEXT, NULL, "Pause to read the part under the"},
-  {HOW_TO_PLAY_TEXT, NULL, "cursor in the header."},
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "GAME OVER"},
-  {HOW_TO_PLAY_TEXT, NULL, "- an LED or 7-seg burns out"},
-  {HOW_TO_PLAY_TEXT, NULL, "- the battery is shorted"},
-  {HOW_TO_PLAY_TEXT, NULL, "- the next part fits nowhere"},
-  {HOW_TO_PLAY_TEXT, NULL, "- more than 15 parts are placed"},
-  {HOW_TO_PLAY_TEXT, NULL, "The header shows SCORE and n/15."},
+static const PageLine HOW_TO_PLAY_LINES[] = {
+  {PAGE_LINE_HEADING, NULL, "GOAL"},
+  {PAGE_LINE_TEXT, NULL, "Parts are dealt to you one by one."},
+  {PAGE_LINE_TEXT, NULL, "Put each one on the breadboard."},
+  {PAGE_LINE_TEXT, NULL, "Light an LED, sound the buzzer or"},
+  {PAGE_LINE_TEXT, NULL, "spin the motor, and every part on"},
+  {PAGE_LINE_TEXT, NULL, "that circuit is cleared: 1 point"},
+  {PAGE_LINE_TEXT, NULL, "per part. The battery stays."},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "THE BOARD"},
+  {PAGE_LINE_TEXT, NULL, "A 5V battery sits on the top-left"},
+  {PAGE_LINE_TEXT, NULL, "rails. Red line is +, blue is -."},
+  {PAGE_LINE_TEXT, NULL, "The top and bottom rails are not"},
+  {PAGE_LINE_TEXT, NULL, "joined: wire them to use both."},
+  {PAGE_LINE_TEXT, NULL, "Holes a-e in a column are joined,"},
+  {PAGE_LINE_TEXT, NULL, "and so are f-j. The groove in the"},
+  {PAGE_LINE_TEXT, NULL, "middle keeps the two apart."},
+  {PAGE_LINE_TEXT, NULL, "Only jumper wires may use rails."},
+  {PAGE_LINE_TEXT, NULL, "A red box marks a blocked pin."},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "PLACING"},
+  {PAGE_LINE_TEXT, NULL, "The header shows the part and the"},
+  {PAGE_LINE_TEXT, NULL, "pin to set next, e.g. anode+."},
+  {PAGE_LINE_TEXT, NULL, "Lead parts take two pins: move and"},
+  {PAGE_LINE_TEXT, NULL, "press Enter for each. Modules drop"},
+  {PAGE_LINE_TEXT, NULL, "at the cursor with one Enter."},
+  {PAGE_LINE_TEXT, NULL, "Jumper wires come 3 times in 10."},
+  {PAGE_LINE_TEXT, NULL, "Single LEDs are always red, and no"},
+  {PAGE_LINE_TEXT, NULL, "battery is ever dealt."},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "CLEARING"},
+  {PAGE_LINE_TEXT, NULL, "When an output runs, the parts on"},
+  {PAGE_LINE_TEXT, NULL, "its current path blink yellow and"},
+  {PAGE_LINE_TEXT, NULL, "the header says CLEAR!. Then they"},
+  {PAGE_LINE_TEXT, NULL, "are removed with their wires."},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "TIPS"},
+  {PAGE_LINE_TEXT, NULL, "An LED needs a resistor in series."},
+  {PAGE_LINE_TEXT, NULL, "A resistor starts at 220 ohm."},
+  {PAGE_LINE_TEXT, NULL, "10 ohm burns a red LED; 10k ohm or"},
+  {PAGE_LINE_TEXT, NULL, "more keeps it dark."},
+  {PAGE_LINE_TEXT, NULL, "LEDs and diodes have a direction:"},
+  {PAGE_LINE_TEXT, NULL, "anode+ goes toward battery +."},
+  {PAGE_LINE_TEXT, NULL, "space on a tact switch presses it,"},
+  {PAGE_LINE_TEXT, NULL, "on a slide switch flips it."},
+  {PAGE_LINE_TEXT, NULL, "+ / - on a resistor, volume or CdS"},
+  {PAGE_LINE_TEXT, NULL, "changes its value."},
+  {PAGE_LINE_TEXT, NULL, "Pause to read the part under the"},
+  {PAGE_LINE_TEXT, NULL, "cursor in the header."},
+  {PAGE_LINE_TEXT, NULL, "While paused, press i on a part to"},
+  {PAGE_LINE_TEXT, NULL, "see what it is and how to use it."},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "GAME OVER"},
+  {PAGE_LINE_TEXT, NULL, "- an LED or 7-seg burns out"},
+  {PAGE_LINE_TEXT, NULL, "- the battery is shorted"},
+  {PAGE_LINE_TEXT, NULL, "- the next part fits nowhere"},
+  {PAGE_LINE_TEXT, NULL, "- more than 15 parts are placed"},
+  {PAGE_LINE_TEXT, NULL, "The header shows SCORE and n/15."},
 #if !defined(PIN_BOARD_WASM)
-  {HOW_TO_PLAY_TEXT, NULL, "A new best is saved as HI-SCORE."},
+  {PAGE_LINE_TEXT, NULL, "A new best is saved as HI-SCORE."},
 #endif
-  {HOW_TO_PLAY_BLANK, NULL, NULL},
-  {HOW_TO_PLAY_HEADING, NULL, "KEYS"},
-  {HOW_TO_PLAY_KEY, "hjkl", "move the cursor"},
-  {HOW_TO_PLAY_KEY, "arrows", "also move the cursor"},
-  {HOW_TO_PLAY_KEY, "Enter", "set the next pin"},
-  {HOW_TO_PLAY_KEY, "space", "press / flip a switch"},
-  {HOW_TO_PLAY_KEY, "+ -", "change a value"},
-  {HOW_TO_PLAY_KEY, "` (ESC)", "redo the first pin"},
-  {HOW_TO_PLAY_KEY, "p", "pause / resume"},
-  {HOW_TO_PLAY_KEY, "q", "quit to the title"},
+  {PAGE_LINE_BLANK, NULL, NULL},
+  {PAGE_LINE_HEADING, NULL, "KEYS"},
+  {PAGE_LINE_KEY, "hjkl", "move the cursor"},
+  {PAGE_LINE_KEY, "arrows", "also move the cursor"},
+  {PAGE_LINE_KEY, "Enter", "set the next pin"},
+  {PAGE_LINE_KEY, "space", "press / flip a switch"},
+  {PAGE_LINE_KEY, "+ -", "change a value"},
+  {PAGE_LINE_KEY, "` (ESC)", "redo the first pin"},
+  {PAGE_LINE_KEY, "p", "pause / resume"},
+  {PAGE_LINE_KEY, "i", "part info (while paused)"},
+  {PAGE_LINE_KEY, "q", "quit to the title"},
 };
 
-#define HOW_TO_PLAY_LINE_COUNT \
-  ((int)(sizeof HOW_TO_PLAY_LINES / sizeof HOW_TO_PLAY_LINES[0]))
-#define HOW_TO_PLAY_LAST_TOP_INDEX \
-  (HOW_TO_PLAY_LINE_COUNT - HOW_TO_PLAY_VISIBLE_LINE_COUNT)
+#define HOW_TO_PLAY_LINE_COUNT COUNT_PAGE_LINES(HOW_TO_PLAY_LINES)
 
 // Draws every filled cell grown by `grow` pixels, so outlines stack.
 static void
@@ -684,128 +654,6 @@ draw_title_screen(int selected_index, int hiscore) {
   canvas_push();
 }
 
-static void
-draw_how_to_play_line(const HowToPlayLine *line, int y) {
-  switch (line->kind) {
-  case HOW_TO_PLAY_HEADING:
-    canvas_text(HOW_TO_PLAY_TEXT_X, y, line->text, HOW_TO_PLAY_HEADING_COLOR);
-    break;
-  case HOW_TO_PLAY_TEXT:
-    canvas_text(HOW_TO_PLAY_TEXT_X, y, line->text, HOW_TO_PLAY_TEXT_COLOR);
-    break;
-  case HOW_TO_PLAY_KEY:
-    canvas_text(HOW_TO_PLAY_TEXT_X, y, line->key, HOW_TO_PLAY_KEY_COLOR);
-    canvas_text(HOW_TO_PLAY_KEY_TEXT_X, y, line->text, HOW_TO_PLAY_TEXT_COLOR);
-    break;
-  default:
-    break;
-  }
-}
-
-static void
-draw_how_to_play_scrollbar(int top_index) {
-  int track_height =
-    HOW_TO_PLAY_VISIBLE_LINE_COUNT * HOW_TO_PLAY_LINE_HEIGHT;
-  int thumb_height =
-    track_height * HOW_TO_PLAY_VISIBLE_LINE_COUNT / HOW_TO_PLAY_LINE_COUNT;
-  int thumb_y = HOW_TO_PLAY_BODY_Y + (track_height - thumb_height) *
-                                       top_index / HOW_TO_PLAY_LAST_TOP_INDEX;
-
-  canvas_fill_rect(
-    HOW_TO_PLAY_SCROLLBAR_X,
-    HOW_TO_PLAY_BODY_Y,
-    HOW_TO_PLAY_SCROLLBAR_WIDTH,
-    track_height,
-    HOW_TO_PLAY_SCROLLBAR_TRACK_COLOR
-  );
-  canvas_fill_rect(
-    HOW_TO_PLAY_SCROLLBAR_X,
-    thumb_y,
-    HOW_TO_PLAY_SCROLLBAR_WIDTH,
-    thumb_height,
-    HOW_TO_PLAY_SCROLLBAR_THUMB_COLOR
-  );
-}
-
-static void
-draw_how_to_play(int top_index) {
-  canvas_fill(THEME_BACKGROUND_COLOR);
-  canvas_text(
-    HOW_TO_PLAY_TEXT_X,
-    HOW_TO_PLAY_TITLE_Y,
-    "HOW TO PLAY",
-    HOW_TO_PLAY_TEXT_COLOR
-  );
-  canvas_fill_rect(
-    0,
-    HOW_TO_PLAY_TITLE_RULE_Y,
-    CANVAS_WIDTH,
-    2,
-    HOW_TO_PLAY_RULE_COLOR
-  );
-
-  for (int i = 0; i < HOW_TO_PLAY_VISIBLE_LINE_COUNT; i++)
-    draw_how_to_play_line(
-      &HOW_TO_PLAY_LINES[top_index + i],
-      HOW_TO_PLAY_BODY_Y + i * HOW_TO_PLAY_LINE_HEIGHT
-    );
-
-  draw_how_to_play_scrollbar(top_index);
-  canvas_line(
-    0,
-    HOW_TO_PLAY_FOOTER_RULE_Y,
-    CANVAS_WIDTH - 1,
-    HOW_TO_PLAY_FOOTER_RULE_Y,
-    HOW_TO_PLAY_RULE_COLOR
-  );
-  canvas_text(
-    HOW_TO_PLAY_TEXT_X,
-    HOW_TO_PLAY_FOOTER_Y,
-    "j/k line  h/l page  other key back",
-    HOW_TO_PLAY_HINT_COLOR
-  );
-  canvas_push();
-}
-
-static int
-clamp_how_to_play_top_index(int top_index) {
-  if (top_index < 0)
-    return 0;
-
-  if (top_index > HOW_TO_PLAY_LAST_TOP_INDEX)
-    return HOW_TO_PLAY_LAST_TOP_INDEX;
-
-  return top_index;
-}
-
-static void
-show_how_to_play(void) {
-  int top_index = 0;
-
-  for (;;) {
-    draw_how_to_play(top_index);
-
-    switch (decode_key(keyboard_wait_key())) {
-    case KEY_UP:
-      top_index--;
-      break;
-    case KEY_DOWN:
-      top_index++;
-      break;
-    case KEY_LEFT:
-      top_index -= HOW_TO_PLAY_VISIBLE_LINE_COUNT;
-      break;
-    case KEY_RIGHT:
-      top_index += HOW_TO_PLAY_VISIBLE_LINE_COUNT;
-      break;
-    default:
-      return;
-    }
-
-    top_index = clamp_how_to_play_top_index(top_index);
-  }
-}
-
 TitleChoice
 run_title_screen(void) {
   int selected_index = TITLE_ITEM_START;
@@ -832,7 +680,7 @@ run_title_screen(void) {
     case TITLE_ITEM_START:
       return TITLE_CHOICE_GAME;
     case TITLE_ITEM_HOW_TO_PLAY:
-      show_how_to_play();
+      show_page("HOW TO PLAY", HOW_TO_PLAY_LINES, HOW_TO_PLAY_LINE_COUNT);
       break;
     default:
       return TITLE_CHOICE_SIMULATOR;

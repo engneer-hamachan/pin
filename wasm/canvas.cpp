@@ -10,6 +10,7 @@ static constexpr int RGBA_BYTE_COUNT = 4;
 static constexpr int PIXEL_COUNT = CANVAS_WIDTH * CANVAS_HEIGHT;
 
 static lgfx::LGFX_Sprite *sprite = nullptr;
+static lgfx::LGFX_Sprite *row_sprite = nullptr;
 static uint8_t rgba_pixels[PIXEL_COUNT * RGBA_BYTE_COUNT];
 
 EM_JS(void, put_canvas_pixels, (const uint8_t *pixels, int width, int height), {
@@ -31,6 +32,17 @@ canvas_begin(void) {
   sprite->setFont(&lgfx::v1::fonts::efontJA_12);
   sprite->setTextSize(1);
   sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
+
+  row_sprite = new lgfx::LGFX_Sprite(sprite);
+  row_sprite->setColorDepth(16);
+
+  if (row_sprite->createSprite(CANVAS_WIDTH, CANVAS_ROW_HEIGHT) == nullptr) {
+    abort();
+  }
+
+  row_sprite->setFont(&lgfx::v1::fonts::efontJA_12);
+  row_sprite->setTextSize(1);
+  row_sprite->setTextDatum(lgfx::v1::textdatum_t::top_left);
   sprite->fillScreen((uint32_t)THEME_BACKGROUND_COLOR);
 }
 
@@ -100,4 +112,30 @@ canvas_push(void) {
   }
 
   put_canvas_pixels(rgba_pixels, CANVAS_WIDTH, CANVAS_HEIGHT);
+}
+
+void
+canvas_row_fill(uint32_t color) {
+  row_sprite->fillScreen(color);
+}
+
+void
+canvas_row_fill_rect(int x, int y, int width, int height, uint32_t color) {
+  row_sprite->fillRect(x, y, width, height, color);
+}
+
+void
+canvas_row_line(int x0, int y0, int x1, int y1, uint32_t color) {
+  row_sprite->drawLine(x0, y0, x1, y1, color);
+}
+
+void
+canvas_row_text(int x, int y, const char *text, uint32_t color) {
+  row_sprite->setTextColor(color);
+  row_sprite->drawString(text, x, y);
+}
+
+void
+canvas_row_commit(int y) {
+  row_sprite->pushSprite(sprite, 0, y);
 }

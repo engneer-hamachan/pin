@@ -1,0 +1,11 @@
+
+class Untyped
+  def to_i: () -> Integer
+
+  def to_int: () -> Integer
+
+  def to_f: () -> Float
+
+  def to_s: () -> String
+
+end

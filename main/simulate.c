@@ -188,7 +188,7 @@ has_main_current(PartKind kind) {
 
 static void
 update_part_from_solution(Breadboard *board, Part *part) {
-  const int *nodes = part->terminal_node_indices;
+  const int16_t *nodes = part->terminal_node_indices;
 
   part->voltage = circuit_voltage(&board->circuit, nodes[0], nodes[1]);
 
@@ -215,6 +215,9 @@ update_part_from_solution(Breadboard *board, Part *part) {
     part->energized = energized;
     break;
   }
+  case PART_KIND_PINO:
+    read_pino_solution(board, part);
+    break;
   default:
     break;
   }
@@ -222,7 +225,7 @@ update_part_from_solution(Breadboard *board, Part *part) {
   update_part_levels(board, part);
 }
 
-static void
+void
 solve_circuit(Breadboard *board) {
   board->circuit_dirty = false;
 

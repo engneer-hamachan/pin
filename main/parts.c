@@ -92,6 +92,9 @@ add_part(
   if (board->part_count == PART_CAPACITY)
     return;
 
+  if (kind == PART_KIND_PINO && count_parts_of_kind(board, kind) > 0)
+    return;
+
   if (kind == PART_KIND_WIRE)
     color_index = count_parts_of_kind(board, PART_KIND_WIRE) % WIRE_COLOR_COUNT;
 
@@ -109,6 +112,11 @@ void
 remove_part(Breadboard *board, Part *part) {
   int part_index = (int)(part - board->parts);
 
+  if (part->kind == PART_KIND_PINO) {
+    stop_pino_program();
+    reset_pino_power();
+  }
+
   memmove(
     part,
     part + 1,
@@ -120,6 +128,8 @@ remove_part(Breadboard *board, Part *part) {
 
 void
 remove_all_parts(Breadboard *board) {
+  stop_pino_program();
+  reset_pino_power();
   board->part_count = 0;
   update_circuit_structure(board);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "circuit.h"
+#include "pino.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,7 +12,7 @@
 #define HOLE_COUNT (BOARD_ROW_COUNT * BOARD_COLUMN_COUNT)
 #define NET_COUNT 64
 #define PART_CAPACITY (HOLE_COUNT / 2)
-#define PART_TERMINAL_CAPACITY 10
+#define PART_TERMINAL_CAPACITY PINO_PIN_COUNT
 #define PART_ELEMENT_CAPACITY 8
 #define CONTACT_PAIR_CAPACITY 2
 #define RESISTOR_VALUE_COUNT 10
@@ -42,14 +43,15 @@ typedef enum {
   PART_KIND_RELAY,
   PART_KIND_VOLUME,
   PART_KIND_CDS,
-  PART_KIND_CAPACITOR
+  PART_KIND_CAPACITOR,
+  PART_KIND_PINO
 } PartKind;
 
 typedef struct {
   PartKind kind;
   int terminal_count;
-  int terminal_hole_indices[PART_TERMINAL_CAPACITY];
-  int terminal_node_indices[PART_TERMINAL_CAPACITY];
+  int16_t terminal_hole_indices[PART_TERMINAL_CAPACITY];
+  int16_t terminal_node_indices[PART_TERMINAL_CAPACITY];
   int element_count;
   int elements[PART_ELEMENT_CAPACITY];
   int junction_current_count;
@@ -87,7 +89,7 @@ typedef struct {
   int menu_category_index;
   int menu_entry_index;
   char message[MESSAGE_SIZE];
-  bool help_visible;
+  bool console_visible;
   bool quit;
   bool needs_redraw;
   bool circuit_dirty;
@@ -152,6 +154,7 @@ int clamp_integer(int value, int minimum, int maximum);
 void rebuild_circuit(Breadboard *board);
 void configure_part_elements(Breadboard *board, Part *part);
 
+void solve_circuit(Breadboard *board);
 void step_simulation(Breadboard *board);
 bool is_animation_running(const Breadboard *board);
 int compute_motor_phase_step(const Part *part);
@@ -179,6 +182,7 @@ bool save_board(const Breadboard *board, int slot_index);
 bool load_board(Breadboard *board, int slot_index);
 
 void format_part_reading(const Part *part, char *text, size_t text_size);
+void show_part_info(PartKind kind);
 void format_header_title(Breadboard *board, char *text, size_t text_size);
 void format_header_right(Breadboard *board, char *text, size_t text_size);
 
@@ -189,3 +193,7 @@ void draw_screen(Breadboard *board);
 uint32_t blend_color(uint32_t dark_color, uint32_t bright_color, int level);
 void draw_parts(const Breadboard *board);
 void draw_module_part(const Part *part);
+
+void build_pino_elements(Breadboard *board, Part *part);
+void configure_pino_elements(Breadboard *board, const Part *part);
+void read_pino_solution(Breadboard *board, const Part *part);

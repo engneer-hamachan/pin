@@ -14,26 +14,7 @@
 #define CURSOR_COLOR 0x00C0FF
 #define PLACEMENT_ALLOWED_COLOR 0x20C020
 #define PLACEMENT_BLOCKED_COLOR 0xFF0000
-#if defined(PIN_BOARD_WASM)
-#define HELP_LINE_COUNT 8
-#else
-#define HELP_LINE_COUNT 9
-#endif
-#define HELP_LINE_HEIGHT 12
-
-static const char *const HELP_LINES[HELP_LINE_COUNT] = {
-  "hjkl / arrows  move",
-  "a / Enter  add part",
-  "space  press or flip switch",
-  "+ -  change value / knob",
-  "x / BS  remove part",
-  "c  clear board",
-#if !defined(PIN_BOARD_WASM)
-  "s / o  save / load",
-#endif
-  "q  quit",
-  "any key  close help",
-};
+#define CONSOLE_LINE_HEIGHT 12
 
 static void
 draw_rail_line(int y, uint32_t color) {
@@ -107,21 +88,22 @@ draw_cursor(const Breadboard *board) {
 }
 
 static void
-draw_help(void) {
+draw_console(void) {
   int top_y = WIDGET_HEADER_HEIGHT + 2;
+  int line_count = count_pino_console_lines();
 
   widget_draw_panel(
     8,
     top_y,
     CANVAS_WIDTH - 16,
-    HELP_LINE_COUNT * HELP_LINE_HEIGHT + 8
+    PINO_CONSOLE_LINE_COUNT * CONSOLE_LINE_HEIGHT + 8
   );
 
-  for (int i = 0; i < HELP_LINE_COUNT; i++)
+  for (int i = 0; i < line_count; i++)
     canvas_text(
       14,
-      top_y + 4 + i * HELP_LINE_HEIGHT,
-      HELP_LINES[i],
+      top_y + 4 + i * CONSOLE_LINE_HEIGHT,
+      read_pino_console_line(i),
       THEME_TEXT_COLOR
     );
 }
@@ -144,8 +126,8 @@ draw_screen(Breadboard *board) {
   format_header_right(board, right_text, sizeof right_text);
   widget_draw_header(title, right_text);
 
-  if (board->help_visible)
-    draw_help();
+  if (board->console_visible)
+    draw_console();
 
   canvas_push();
 }

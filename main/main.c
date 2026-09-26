@@ -46,6 +46,7 @@ run_breadboard(void) {
     if (key != KEY_NONE)
       handle_key(&board, key);
 
+    step_pino_program();
     step_simulation(&board);
 
     if (board.needs_redraw || is_animation_running(&board))

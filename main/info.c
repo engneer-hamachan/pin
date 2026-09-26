@@ -15,6 +15,20 @@ find_terminal_index(const Part *part, int hole_index) {
   return 0;
 }
 
+static const char *
+find_pino_program_state_name(PinoProgramState state) {
+  switch (state) {
+  case PINO_PROGRAM_RUNNING:
+    return "running";
+  case PINO_PROGRAM_FINISHED:
+    return "finished";
+  case PINO_PROGRAM_FAILED:
+    return "error";
+  default:
+    return "stopped";
+  }
+}
+
 static void
 format_current(double amperes, char *text, size_t text_size) {
   long long microamperes = (long long)(fabs(amperes) * 1000000);
@@ -137,6 +151,14 @@ format_part_reading(const Part *part, char *text, size_t text_size) {
       text_size,
       "%s",
       part->slide_position == 0 ? "A side" : "B side"
+    );
+    break;
+  case PART_KIND_PINO:
+    snprintf(
+      text,
+      text_size,
+      "%s",
+      find_pino_program_state_name(read_pino_program_state())
     );
     break;
   default:
