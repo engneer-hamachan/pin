@@ -41,11 +41,11 @@ At start Pin shows a title screen. `j` / `k` or arrows choose, Enter / space sel
 
 ## Game
 
-The board starts with a 5V battery on the top-left rails. A random part is dealt from the add menu (no battery, red LED only; jumper wires come 6 times as often as any other part). Place it the same way as in the simulator, then the next part comes. Only jumper wires may go on the rails.
+The board starts with a 5V battery on the top-left rails. A random part is dealt from the add menu (no battery, red LED only; jumper wires come 6 times as often as any other part). Place it the same way as in the simulator, then the next part comes. Any part may go on the rails.
 
-When an LED, RGB LED or 7-segment lights, a buzzer sounds or a motor turns, every part carrying current (except batteries) and the wires on that path are removed, 1 point each.
+When an LED, RGB LED or 7-segment lights, a buzzer sounds or a motor turns, every part carrying current (except batteries) and the wires on that path are removed; clearing n parts scores n × n points.
 
-The game is over when a part burns out, the battery is shorted, the dealt part fits nowhere, or more than 15 parts (not counting the battery) are on the board. A score higher than the record is saved to `Pin_data/hiscore.txt`.
+The game is over when a part burns out, the battery is shorted, the dealt part fits nowhere, or more than 15 parts (not counting the battery) are on the board. The game is cleared after 40 parts are placed. A score higher than the record is saved to `Pin_data/hiscore.txt`.
 
 - hjkl / arrows: move cursor
 - Enter: set the next pin

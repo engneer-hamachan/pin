@@ -19,18 +19,18 @@
 #define BATTERY_NEGATIVE_ROW 1
 #define BATTERY_COLUMN 1
 #define CLEAR_MARKER_COLOR 0xFFD020
-#define RAIL_BLOCKED_COLOR 0xFF0000
 #define WIRE_WEIGHT 6
 #define GAME_LED_COLOR_INDEX 0
 #define PART_LIMIT 15
-#define GAME_OVER_PANEL_X 30
-#define GAME_OVER_PANEL_Y 30
-#define GAME_OVER_PANEL_WIDTH (CANVAS_WIDTH - GAME_OVER_PANEL_X * 2)
-#define GAME_OVER_LINE_HEIGHT 14
+#define PLACEMENT_LIMIT 40
+#define GAME_END_PANEL_X 30
+#define GAME_END_PANEL_Y 30
+#define GAME_END_PANEL_WIDTH (CANVAS_WIDTH - GAME_END_PANEL_X * 2)
+#define GAME_END_LINE_HEIGHT 14
 #if defined(PIN_BOARD_WASM)
-#define GAME_OVER_LINE_COUNT 4
+#define GAME_END_LINE_COUNT 4
 #else
-#define GAME_OVER_LINE_COUNT 5
+#define GAME_END_LINE_COUNT 5
 #endif
 
 typedef enum {
@@ -45,10 +45,12 @@ typedef struct {
   Breadboard *board;
   int score;
   int hiscore;
+  int placement_count;
   int clear_frames;
   bool room_check_pending;
   const PlacementEntry *dealt_entry;
   bool quit;
+  bool cleared;
   GameOverReason over_reason;
 } Game;
 
@@ -136,31 +138,17 @@ deal_next_part(Game *game) {
   game->room_check_pending = true;
 }
 
-static bool
-is_placement_on_rail(const Breadboard *board) {
-  if (board->placing_entry->kind == PART_KIND_WIRE)
-    return false;
-
-  int hole_indices[PART_TERMINAL_CAPACITY];
-  int hole_count = compute_placement_hole_indices(board, hole_indices);
-
-  return touches_rail(hole_indices, hole_count);
-}
-
 static void
 place_part(Game *game) {
   Breadboard *board = game->board;
   int part_count = board->part_count;
 
-  if (is_placement_on_rail(board)) {
-    snprintf(board->message, sizeof(board->message), "rails: wire only");
-    return;
-  }
-
   handle_placement_key(board, KEY_ENTER);
 
-  if (board->part_count > part_count)
+  if (board->part_count > part_count) {
+    game->placement_count++;
     deal_next_part(game);
+  }
 }
 
 static void
@@ -269,7 +257,9 @@ update_game(Game *game) {
     game->clear_frames--;
 
     if (game->clear_frames == 0) {
-      game->score += remove_marked_parts(board);
+      int removed_count = remove_marked_parts(board);
+
+      game->score += removed_count * removed_count;
       game->room_check_pending = true;
     }
 
@@ -285,6 +275,11 @@ update_game(Game *game) {
   if (board->part_count - count_parts_of_kind(board, PART_KIND_BATTERY) >
       PART_LIMIT) {
     game->over_reason = GAME_OVER_TOO_MANY_PARTS;
+    return;
+  }
+
+  if (game->placement_count >= PLACEMENT_LIMIT) {
+    game->cleared = true;
     return;
   }
 
@@ -333,31 +328,13 @@ format_game_header_right(const Game *game, char *text, size_t text_size) {
   snprintf(
     text,
     text_size,
-    "SCORE %d  %d/%d",
+    "S %d P %d/%d L %d",
     game->score,
     game->board->part_count -
       count_parts_of_kind(game->board, PART_KIND_BATTERY),
-    PART_LIMIT
+    PART_LIMIT,
+    PLACEMENT_LIMIT - game->placement_count
   );
-}
-
-static void
-draw_rail_markers(const Breadboard *board) {
-  int hole_indices[PART_TERMINAL_CAPACITY];
-  int hole_count = compute_placement_hole_indices(board, hole_indices);
-
-  for (int i = 0; i < hole_count; i++) {
-    if (!is_rail_hole(hole_indices[i]))
-      continue;
-
-    canvas_rect(
-      compute_hole_x(hole_indices[i]) - 3,
-      compute_hole_y(hole_indices[i]) - 3,
-      7,
-      7,
-      RAIL_BLOCKED_COLOR
-    );
-  }
 }
 
 static void
@@ -374,9 +351,6 @@ draw_game(Game *game) {
     draw_clear_markers(board);
   } else if (board->placing_entry) {
     draw_placement_preview(board);
-
-    if (is_placement_on_rail(board))
-      draw_rail_markers(board);
   }
 
   draw_cursor(board);
@@ -425,7 +399,7 @@ record_hiscore(const Game *game, char *text, size_t text_size) {
 #endif
 
 static void
-show_game_over(Game *game) {
+show_game_end(Game *game) {
   char score_line[TEXT_SIZE];
 
   snprintf(score_line, sizeof score_line, "SCORE %d", game->score);
@@ -436,9 +410,9 @@ show_game_over(Game *game) {
   record_hiscore(game, hiscore_line, sizeof hiscore_line);
 #endif
 
-  const char *lines[GAME_OVER_LINE_COUNT] = {
-    "GAME OVER",
-    find_game_over_text(game->over_reason),
+  const char *lines[GAME_END_LINE_COUNT] = {
+    game->cleared ? "GAME CLEAR" : "GAME OVER",
+    game->cleared ? "All parts placed" : find_game_over_text(game->over_reason),
     score_line,
 #if !defined(PIN_BOARD_WASM)
     hiscore_line,
@@ -449,16 +423,16 @@ show_game_over(Game *game) {
   while (canvas_begin_band()) {
     draw_game(game);
     widget_draw_panel(
-      GAME_OVER_PANEL_X,
-      GAME_OVER_PANEL_Y,
-      GAME_OVER_PANEL_WIDTH,
-      GAME_OVER_LINE_COUNT * GAME_OVER_LINE_HEIGHT + 8
+      GAME_END_PANEL_X,
+      GAME_END_PANEL_Y,
+      GAME_END_PANEL_WIDTH,
+      GAME_END_LINE_COUNT * GAME_END_LINE_HEIGHT + 8
     );
 
-    for (int i = 0; i < GAME_OVER_LINE_COUNT; i++)
+    for (int i = 0; i < GAME_END_LINE_COUNT; i++)
       canvas_text(
-        GAME_OVER_PANEL_X + 8,
-        GAME_OVER_PANEL_Y + 4 + i * GAME_OVER_LINE_HEIGHT,
+        GAME_END_PANEL_X + 8,
+        GAME_END_PANEL_Y + 4 + i * GAME_END_LINE_HEIGHT,
         lines[i],
         i == 0 ? THEME_EMPHASIS_COLOR : THEME_TEXT_COLOR
       );
@@ -479,7 +453,7 @@ run_game(Breadboard *board) {
   place_battery(board);
   deal_next_part(&game);
 
-  while (!game.quit && game.over_reason == GAME_OVER_NONE) {
+  while (!game.quit && !game.cleared && game.over_reason == GAME_OVER_NONE) {
     int key = keyboard_read_key();
 
     if (key != KEY_NONE && game.clear_frames == 0)
@@ -499,8 +473,8 @@ run_game(Breadboard *board) {
     vTaskDelay(pdMS_TO_TICKS(GAME_FRAME_INTERVAL_MS));
   }
 
-  if (game.over_reason != GAME_OVER_NONE)
-    show_game_over(&game);
+  if (game.cleared || game.over_reason != GAME_OVER_NONE)
+    show_game_end(&game);
 
   reset_board(board);
 }

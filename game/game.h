@@ -18,7 +18,6 @@ bool has_burned_part(const Breadboard *board);
 void mark_current_path_parts(const Breadboard *board);
 bool is_part_marked(int part_index);
 int remove_marked_parts(Breadboard *board);
-bool touches_rail(const int *hole_indices, int hole_count);
 bool can_place_anywhere(Breadboard *board, PartKind kind);
 
 int load_hiscore(void);
